@@ -30,6 +30,7 @@
 		<script src="../three.js/build/three.min.js"></script>
 		<script src="./js/fft.js"></script>
 		<script src="./js/beatdetektor.js"></script>
+		<script src="./js/dat.gui.min.js"></script>
 
 
 		<script src="../three.js/examples/js/shaders/CopyShader.js"></script>
@@ -66,150 +67,27 @@
 				vu: null,
 			};
 
-			var lastKick = new Date().getTime();
-			var rects = new Array();
-			var displayFFT = false;
-
+			var audioContext;
+			var audioSource;
+			var audioData;
 
 			var m_BeatTimer = 0;
 			var m_BeatCounter = 0;
 			var clearClr = [0, 0, 1];
 
-			var camera, scene, renderer, composer;
-			var object, light;
+			var lastKick = new Date().getTime();
+			var kickThreshold = 500; // minimum threshold between kicks in ms
+			var rects = new Array();
+			var displayFFT = false;
 
-			var audioContext = new webkitAudioContext();
-			var audioAnalyser;// = audioContext.createAnalyser();
-			var audioSource;
-			var audioData;
-			var audioActive = false;
+
+
+			var camera, scene, renderer, composer;
 
 			var dotScreenEffect, rgbShiftEffect, edgeEffect, edgeEffect2;
 
 			init();
 			animate();
-
-
-			function initAudio() {
-
-
-				audio.bufferSize = 1024;
-				audio.channels = 1;
-
-				if (!audioContext) audioContext = new webkitAudioContext();
-
-				audio.rate = audioContext.sampleRate;
-				audioData = audioContext.createJavaScriptNode(audio.bufferSize, 2, 1);
-
-				audioData.onaudioprocess = doWebkitAudio;
-
-				navigator.webkitGetUserMedia( {audio:true}, function( stream ) {
-
-					audioSource = audioContext.createMediaStreamSource( stream );
-					// this is what starts the callback
-					audioSource.connect( audioData );
-					audioData.connect( audioContext.destination );
-
-					audio.fft = new FFT(audio.bufferSize, audio.rate);
-
-				});
-
-				audio.bd = new BeatDetektor();
-				audio.kick_det = new BeatDetektor.modules.vis.BassKick();
-				audio.vu = new BeatDetektor.modules.vis.VU();
-
-
-			}
-
-			function initFFT() {
-				console.log( 'initFFT' );
-				navigator.webkitGetUserMedia( {audio:true}, function(stream) {
-					console.log( 'audio permission granted' );
-					audioSource = audioContext.createMediaStreamSource( stream );
-					audioAnalyser = audioContext.createAnalyser();
-					audioSource.connect( audioAnalyser );
-
-					audioData = audioContext.createJavaScriptNode( 1024, 2, 1 );
-					audioData.onaudioprocess = doWebkitAudio;
-					audioData.connect(audioContext.destination);
-
-					audioActive = true;
-				});
-
-			}
-
-			function doWebkitAudio() {
-				if ( !audio.fft ) {
-					return;
-				}
-
-				var signalLeft = event.inputBuffer.getChannelData(0);
-				var signalRight = event.inputBuffer.getChannelData(1);
-
-				if (!audio.signal) {
-					audio.signal = new Float32Array(signalLeft.length);
-				}
-				for (var i = 0, fbl = audio.bufferSize; i < fbl; i++) {
-					audio.signal[i] = signalLeft[i] + signalRight[i] / 2;
-				}
-				// console.log( 'audio signal at 100: ' + audio.signal[100] );
-
-				audio.fft.forward(audio.signal);
-				audio.bd.process(event.timeStamp / 1000, audio.fft.spectrum);
-
-				if (audio.bd.win_bpm_int_lo) {
-					m_BeatTimer += audio.bd.last_update;
-
-					if (m_BeatTimer > (60.0 / audio.bd.win_bpm_int_lo)) {
-						m_BeatTimer -= (60.0 / audio.bd.win_bpm_int_lo);
-						clearClr[0] = 0.5 + Math.random() / 2;
-						clearClr[1] = 0.5 + Math.random() / 2;
-						clearClr[2] = 0.5 + Math.random() / 2;
-						m_BeatCounter++;
-					}
-				}
-
-				audio.kick_det.process( audio.bd );
-
-				var timestamp = new Date().getTime();
-				if ( audio.kick_det.isKick() ) {
-					// console.log( 'lastKick: ' + lastKick );
-					var diff = timestamp - lastKick;
-					// console.log( 'diff: ' + diff );
-					if ( diff > 500 ) {
-						lastKick = timestamp;
-						console.log( "kick at " + lastKick );
-					}
-
-				}
-
-				for ( var i=0; i<audio.vu.vu_levels.length; i++ ) {
-					var rect = rects[i];
-					var vu = audio.vu.vu_levels[i];
-					if ( displayFFT )
-						vu = audio.fft.spectrum[i*4] * 10.0;
-					vu = Math.max( .01, vu );
-					rect.scale.y = 250.0 * vu;
-				}
-
-                audio.vu.process(audio.bd, event.timeStamp / 1000);
-			}
-
-			function doFFT() {
-
-				return;
-
-				if ( !audioActive )
-					return;
-
-				var array = new Uint8Array( audioAnalyser.frequencyBinCount );
-				audioAnalyser.getByteFrequencyData(array);
-				var audible_bands = array.subarray(0, 1024);
-
-				// console.log( "value for 100: " + audible_bands[100] );
-
-
-			}
 
 			function updateOptions() {
 				var dotScreen = document.getElementById('dotScreen');
@@ -230,13 +108,6 @@
 			function init() {
 
 				initAudio();
-				// initFFT();
-
-				// fft
-				// .start()
-				// .bind('update', function(bands) {
-				// 	console.log( 'callback', bands.length );
-				// });
 
 				renderer = new THREE.WebGLRenderer();
 				renderer.setSize( window.innerWidth, window.innerHeight );
@@ -244,10 +115,20 @@
 
 				scene = new THREE.Scene();
 
-				// camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-				// camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, - 500, 1000 );
 				camera = new THREE.OrthographicCamera( 0, window.innerWidth, window.innerHeight / 2, window.innerHeight / - 2, - 500, 1000 );
 				camera.position.z = 400;
+
+				initRects();
+
+				initPostProcessing();
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+				updateOptions();
+
+			}
+
+			function initRects() {
 
 				var geometry = new THREE.PlaneGeometry( 1, 1 );
 				var material = new THREE.MeshBasicMaterial( {color:0xffffff} );
@@ -263,9 +144,9 @@
 					scene.add( mesh );
 					rects.push( mesh );
 				}
+			}
 
-				// postprocessing
-
+			function initPostProcessing() {
 				composer = new THREE.EffectComposer( renderer );
 				composer.addPass( new THREE.RenderPass( scene, camera ) );
 
@@ -290,19 +171,90 @@
 				var effect = new THREE.ShaderPass( THREE.CopyShader);
 				effect.renderToScreen = true;
 				composer.addPass( effect );
+			}
 
-				window.addEventListener( 'resize', onWindowResize, false );
+			function initAudio() {
+				// create the audio context
+				if (!audioContext) audioContext = new webkitAudioContext();
+				// set some audio variables
+				audio.bufferSize = 1024;
+				audio.channels = 1;
+				audio.rate = audioContext.sampleRate;
+				// create a node so we can get callbacks
+				audioData = audioContext.createJavaScriptNode(audio.bufferSize, 2, 1);
+				// set the callback function
+				audioData.onaudioprocess = doWebkitAudio;
+				// request permission to get the users mic/input/whatever
+				navigator.webkitGetUserMedia( {audio:true}, function( stream ) {
+					// create an audio source from the stream
+					audioSource = audioContext.createMediaStreamSource( stream );
+					// connect it to our node
+					audioSource.connect( audioData );
+					// route that to the audio context and we're good to go
+					audioData.connect( audioContext.destination );
+					// set up our FFT analyzer
+					audio.fft = new FFT(audio.bufferSize, audio.rate);
+				});
+				// initialize beat detector and modules
+				audio.bd = new BeatDetektor();
+				audio.kick_det = new BeatDetektor.modules.vis.BassKick();
+				audio.vu = new BeatDetektor.modules.vis.VU();
+			}
 
-				updateOptions();
+			function doWebkitAudio() {
+				if ( !audio.fft ) {
+					return;
+				}
 
+				var signalLeft = event.inputBuffer.getChannelData(0);
+				var signalRight = event.inputBuffer.getChannelData(1);
+
+				if (!audio.signal) {
+					audio.signal = new Float32Array(signalLeft.length);
+				}
+				for (var i = 0, fbl = audio.bufferSize; i < fbl; i++) {
+					audio.signal[i] = signalLeft[i] + signalRight[i] / 2;
+				}
+
+				audio.fft.forward(audio.signal);
+				audio.bd.process(event.timeStamp / 1000, audio.fft.spectrum);
+
+				if (audio.bd.win_bpm_int_lo) {
+					m_BeatTimer += audio.bd.last_update;
+
+					if (m_BeatTimer > (60.0 / audio.bd.win_bpm_int_lo)) {
+						m_BeatTimer -= (60.0 / audio.bd.win_bpm_int_lo);
+						clearClr[0] = 0.5 + Math.random() / 2;
+						clearClr[1] = 0.5 + Math.random() / 2;
+						clearClr[2] = 0.5 + Math.random() / 2;
+						m_BeatCounter++;
+					}
+				}
+
+				audio.kick_det.process( audio.bd );
+
+				if ( audio.kick_det.isKick() ) {
+					var diff = event.timeStamp - lastKick;
+					if ( diff > kickThreshold ) {
+						// A KICK HAPPENED HERE
+						lastKick = event.timeStamp;
+					}
+
+				}
+
+				for ( var i=0; i<audio.vu.vu_levels.length; i++ ) {
+					var rect = rects[i];
+					var vu = audio.vu.vu_levels[i];
+					if ( displayFFT )
+						vu = audio.fft.spectrum[i*4] * 10.0;
+					vu = Math.max( .01, vu );
+					rect.scale.y = 250.0 * vu;
+				}
+
+                audio.vu.process(audio.bd, event.timeStamp / 1000);
 			}
 
 			function onWindowResize() {
-
-				// camera.aspect = window.innerWidth / window.innerHeight;
-				// camera.updateProjectionMatrix();
-
-				// camera.left = window.innerWidth / - 2;
 				camera.left = 0;
 				camera.right = window.innerWidth;
 				camera.top = window.innerHeight / 2;
@@ -320,8 +272,6 @@
 			}
 
 			function animate() {
-
-				doFFT();
 
 				requestAnimationFrame( animate );
 
