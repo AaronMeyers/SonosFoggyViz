@@ -33,6 +33,7 @@
 		<script src="../three.js/examples/js/postprocessing/ShaderPass.js"></script>
 		<!-- MODULES -->
 		<script src="./js/modules/test_module.js"></script>
+		<script src="./js/modules/empty_module.js"></script>
 
 		<script>
 			var gui;
@@ -66,9 +67,8 @@
 			var camera, scene, renderer, composer;
 
 			// modules
-			var modules = {
-				testModule: null
-			};
+			var modules = {};
+			var module = '';
 			var activeModule;
 
 			var postProcessing = {
@@ -113,8 +113,10 @@
 					height: 1000
 				});
 
-				gui.add( this, 'modules', { TestModule: modules.testModule, OtherModule: 0 } ).onChange( function( value ) {
-					console.log( 'module changed: ' + value );
+				gui.add( this, 'module', ['testModule', 'emptyModule'] ).onChange( function( value ) {
+					activeModule.off();
+					activeModule = modules[value];
+					activeModule.on();
 				});
 
 				// var audioFolder = gui.addFolder( 'Audio' );
@@ -136,6 +138,7 @@
 
 			function initModules() {
 				modules.testModule = new TestModule( audio, scene, gui.addFolder( 'Test Module' ) );
+				modules.emptyModule = new EmptyModule( audio, scene, gui.addFolder( 'Empty Module' ) );
 
 				activeModule = modules.testModule;
 				activeModule.on();
