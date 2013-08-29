@@ -1,23 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - postprocessing</title>
+		<title>SONOS FOGGY VIZ</title>
 		<meta charset="utf-8">
 		<style>
 			body {
 				margin: 0px;
 				background-color: #000000;
 				overflow: hidden;
-			}
-
-			div {
-				position: absolute;
-				z-index: 10;
-				color: #fff;
-				font-family: monospace;
-				text-align: center;
-				margin: 10px;
-				width: 100%;
 			}
 
 			label, input {
@@ -27,33 +17,25 @@
 	</head>
 	<body>
 
-		<script src="../three.js/build/three.min.js"></script>
+		<!-- VARIOUS LIBS -->
 		<script src="./js/fft.js"></script>
 		<script src="./js/beatdetektor.js"></script>
 		<script src="./js/dat.gui.min.js"></script>
-
-
+		<!-- THREE.JS STUFF -->
+		<script src="../three.js/build/three.min.js"></script>
 		<script src="../three.js/examples/js/shaders/CopyShader.js"></script>
-		<script src="../three.js/examples/js/shaders/DotScreenShader.js"></script>
 		<script src="../three.js/examples/js/shaders/RGBShiftShader.js"></script>
 		<script src="../three.js/examples/js/shaders/EdgeShader.js"></script>
 		<script src="../three.js/examples/js/shaders/EdgeShader2.js"></script>
-
 		<script src="../three.js/examples/js/postprocessing/EffectComposer.js"></script>
 		<script src="../three.js/examples/js/postprocessing/RenderPass.js"></script>
 		<script src="../three.js/examples/js/postprocessing/MaskPass.js"></script>
 		<script src="../three.js/examples/js/postprocessing/ShaderPass.js"></script>
-
-		<div>
-			<label for="fft">FFT:</label><input id="fft" type="checkbox" onchange="updateOptions()"/><br />
-			<label for="dotScreen">Dot Screen:</label><input id="dotScreen" type="checkbox" onchange="updateOptions()"/><br />
-			<label for="rgbShift">RGB Shift:</label><input id="rgbShift" type="checkbox" onchange="updateOptions()" /><br />
-			<label for="edge">Edge Detection (Frei-Chen Filter):</label><input id="edge" type="checkbox" onchange="updateOptions()" /><br />
-			<label for="edge2">Edge Detection (Sobel Filter):</label><input id="edge2" type="checkbox" onchange="updateOptions()" /><br />
-
-		</div>
+		<!-- MODULES -->
+		<script src="./js/modules/test_module.js"></script>
 
 		<script>
+			var gui;
 
 			var audio = {
 				element: null,
@@ -65,6 +47,8 @@
 				bd: null,
 				kick_det: null,
 				vu: null,
+				testThing: 0,
+				testBool: false,
 			};
 
 			var audioContext;
@@ -77,33 +61,25 @@
 
 			var lastKick = new Date().getTime();
 			var kickThreshold = 500; // minimum threshold between kicks in ms
-			var rects = new Array();
 			var displayFFT = false;
-
-
 
 			var camera, scene, renderer, composer;
 
-			var dotScreenEffect, rgbShiftEffect, edgeEffect, edgeEffect2;
+			// modules
+			var modules = {
+				testModule: null
+			};
+			var activeModule;
+
+			var postProcessing = {
+				rgbShift: false,
+				edgeEffect: false,
+				edgeEffect2: false
+			};
+			var rgbShiftEffect, edgeEffect, edgeEffect2;
 
 			init();
 			animate();
-
-			function updateOptions() {
-				var dotScreen = document.getElementById('dotScreen');
-				var rgbShift = document.getElementById('rgbShift');
-				var edge = document.getElementById('edge');
-				var edge2 = document.getElementById('edge2');
-
-				displayFFT = document.getElementById('fft').checked;
-
-
-				dotScreenEffect.enabled = dotScreen.checked;
-				rgbShiftEffect.enabled = rgbShift.checked;
-				edgeEffect.enabled = edge.checked;
-				edgeEffect2.enabled = edge2.checked;
-
-			}
 
 			function init() {
 
@@ -118,54 +94,72 @@
 				camera = new THREE.OrthographicCamera( 0, window.innerWidth, window.innerHeight / 2, window.innerHeight / - 2, - 500, 1000 );
 				camera.position.z = 400;
 
-				initRects();
+				// initRects();
 
 				initPostProcessing();
 
+				initGUI();
+
+				initModules();
+
+
+
 				window.addEventListener( 'resize', onWindowResize, false );
-
-				updateOptions();
-
 			}
 
-			function initRects() {
+			function initGUI() {
 
-				var geometry = new THREE.PlaneGeometry( 1, 1 );
-				var material = new THREE.MeshBasicMaterial( {color:0xffffff} );
+				gui = new dat.GUI({
+					height: 1000
+				});
 
-				var count = 128;
-				for ( var i = 0; i < count; i ++ ) {
+				gui.add( this, 'modules', { TestModule: modules.testModule, OtherModule: 0 } ).onChange( function( value ) {
+					console.log( 'module changed: ' + value );
+				});
 
-					var mesh = new THREE.Mesh( geometry, material );
-					mesh.position.set( ( i / (count-1) ) * window.innerWidth, 0, 0 );
-					mesh.scale.x = 5;
-					mesh.scale.y = 200;
+				// var audioFolder = gui.addFolder( 'Audio' );
+				// audioFolder.add( audio, 'testThing' );
+				// audioFolder.add( audio, 'testBool' );
+				// audioFolder.open();
 
-					scene.add( mesh );
-					rects.push( mesh );
-				}
+				var ppFolder = gui.addFolder( 'Post Processing' );
+				ppFolder.add( postProcessing, 'rgbShift' ).onChange( function( value ) {
+					rgbShiftEffect.enabled = value;
+				});
+				ppFolder.add( postProcessing, 'edgeEffect' ).onChange( function( value ) {
+					edgeEffect.enabled = value;
+				});
+				ppFolder.add( postProcessing, 'edgeEffect2' ).onChange( function( value ) {
+					edgeEffect2.enabled = value;
+				});
+			}
+
+			function initModules() {
+				modules.testModule = new TestModule( audio, scene, gui.addFolder( 'Test Module' ) );
+
+				activeModule = modules.testModule;
+				activeModule.on();
 			}
 
 			function initPostProcessing() {
 				composer = new THREE.EffectComposer( renderer );
 				composer.addPass( new THREE.RenderPass( scene, camera ) );
 
-				dotScreenEffect = new THREE.ShaderPass( THREE.DotScreenShader );
-				dotScreenEffect.uniforms[ 'scale' ].value = 4;
-				composer.addPass( dotScreenEffect );
-
 				rgbShiftEffect = new THREE.ShaderPass( THREE.RGBShiftShader );
 				rgbShiftEffect.uniforms[ 'amount' ].value = 0.0015;
+				rgbShiftEffect.enabled = postProcessing.rgbShift;
 				composer.addPass( rgbShiftEffect );
 
 				edgeEffect = new THREE.ShaderPass( THREE.EdgeShader );
 				edgeEffect.uniforms[ 'aspect' ].value.x = window.innerWidth;
 				edgeEffect.uniforms[ 'aspect' ].value.y = window.innerHeight;
+				edgeEffect.enabled = postProcessing.edgeEffect;
 				composer.addPass( edgeEffect );
 
 				edgeEffect2 = new THREE.ShaderPass( THREE.EdgeShader2 );
 				edgeEffect2.uniforms[ 'aspect' ].value.x = window.innerWidth;
 				edgeEffect2.uniforms[ 'aspect' ].value.y = window.innerHeight;
+				edgeEffect2.enabled = postProcessing.edgeEffect2;
 				composer.addPass( edgeEffect2 );
 
 				var effect = new THREE.ShaderPass( THREE.CopyShader);
@@ -242,15 +236,6 @@
 
 				}
 
-				for ( var i=0; i<audio.vu.vu_levels.length; i++ ) {
-					var rect = rects[i];
-					var vu = audio.vu.vu_levels[i];
-					if ( displayFFT )
-						vu = audio.fft.spectrum[i*4] * 10.0;
-					vu = Math.max( .01, vu );
-					rect.scale.y = 250.0 * vu;
-				}
-
                 audio.vu.process(audio.bd, event.timeStamp / 1000);
 			}
 
@@ -268,14 +253,14 @@
 				edgeEffect.uniforms[ 'aspect' ].value.y = window.innerHeight;
 				edgeEffect2.uniforms[ 'aspect' ].value.x = window.innerWidth;
 				edgeEffect2.uniforms[ 'aspect' ].value.y = window.innerHeight;
-
 			}
 
 			function animate() {
 
 				requestAnimationFrame( animate );
 
-				var time = Date.now();
+				if ( activeModule )
+					activeModule.update();
 
 				composer.render();
 				// renderer.render(scene, camera);
