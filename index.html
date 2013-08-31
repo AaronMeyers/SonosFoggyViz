@@ -21,6 +21,7 @@
 		<script src="./js/fft.js"></script>
 		<script src="./js/beatdetektor.js"></script>
 		<script src="./js/dat.gui.min.js"></script>
+		<script src="./js/tween.min.js"></script>
 		<!-- THREE.JS STUFF -->
 		<script src="../three.js/build/three.min.js"></script>
 		<script src="../three.js/examples/js/shaders/CopyShader.js"></script>
@@ -31,8 +32,12 @@
 		<script src="../three.js/examples/js/postprocessing/RenderPass.js"></script>
 		<script src="../three.js/examples/js/postprocessing/MaskPass.js"></script>
 		<script src="../three.js/examples/js/postprocessing/ShaderPass.js"></script>
+		<!-- STUFF -->
+		<script src="./js/utils.js"></script>
+		<script src="./js/rect.js"></script>
 		<!-- MODULES -->
 		<script src="./js/modules/test_module.js"></script>
+		<script src="./js/modules/splitter_module.js"></script>
 		<script src="./js/modules/empty_module.js"></script>
 
 		<script>
@@ -59,6 +64,8 @@
 			var m_BeatTimer = 0;
 			var m_BeatCounter = 0;
 			var clearClr = [0, 0, 1];
+
+			var bpm = 120;
 
 			var lastKick = new Date().getTime();
 			var kickThreshold = 500; // minimum threshold between kicks in ms
@@ -105,6 +112,11 @@
 
 
 				window.addEventListener( 'resize', onWindowResize, false );
+				window.addEventListener( 'keydown', onKeyDown, false );
+			}
+
+			function onKeyDown( event ) {
+				activeModule.key( String.fromCharCode( event.which ) );
 			}
 
 			function initGUI() {
@@ -113,11 +125,13 @@
 					height: 1000
 				});
 
-				gui.add( this, 'module', ['testModule', 'emptyModule'] ).onChange( function( value ) {
+				gui.add( this, 'bpm' ).listen();
+
+				gui.add( this, 'module', ['testModule', 'splitterModule', 'emptyModule'] ).onChange( function( value ) {
 					activeModule.off();
 					activeModule = modules[value];
 					activeModule.on();
-				});
+				}).listen();
 
 				// var audioFolder = gui.addFolder( 'Audio' );
 				// audioFolder.add( audio, 'testThing' );
@@ -138,9 +152,11 @@
 
 			function initModules() {
 				modules.testModule = new TestModule( audio, scene, gui.addFolder( 'Test Module' ) );
+				modules.splitterModule = new SplitterModule( audio, scene, gui.addFolder( 'Splitter Module' ) );
 				modules.emptyModule = new EmptyModule( audio, scene, gui.addFolder( 'Empty Module' ) );
 
-				activeModule = modules.testModule;
+				module = 'splitterModule';
+				activeModule = modules[module];
 				activeModule.on();
 			}
 
@@ -220,6 +236,7 @@
 					m_BeatTimer += audio.bd.last_update;
 
 					if (m_BeatTimer > (60.0 / audio.bd.win_bpm_int_lo)) {
+						// console.log( 'a beat: ' + m_BeatCounter );
 						m_BeatTimer -= (60.0 / audio.bd.win_bpm_int_lo);
 						clearClr[0] = 0.5 + Math.random() / 2;
 						clearClr[1] = 0.5 + Math.random() / 2;
@@ -227,6 +244,8 @@
 						m_BeatCounter++;
 					}
 				}
+
+				bpm = audio.bd.win_bpm_int / 10.0;
 
 				audio.kick_det.process( audio.bd );
 
@@ -261,6 +280,8 @@
 			function animate() {
 
 				requestAnimationFrame( animate );
+
+				TWEEN.update();
 
 				if ( activeModule )
 					activeModule.update();
