@@ -46,18 +46,37 @@ SplitterModule.prototype.update = function() {
 
 }
 
+SplitterModule.prototype.setFill = function( fill ) {
+	this.filled = fill;
+	for ( var r in this.rects ) {
+		this.rects[r].setFill( this.filled );
+	}
+}
+
 SplitterModule.prototype.key = function( key ) {
 
 	if ( key == 'M' ) {
 		this.spinning = !this.spinning;
 	}
 
+	if ( key == 'Q' ) {
+		this.setFill( true );
+		var tween = new TWEEN.Tween({module:this, material:planeMaterial, opacity:planeMaterial.opacity})
+			.to({opacity:0}, 250 )
+			.onUpdate( function() {
+				this.material.opacity = this.opacity;
+			})
+			.onComplete( function() {
+				// after we've faded out the fill, turn the fill off and set the material back to being fully opaque
+				this.module.setFill( false );
+				this.material.opacity = 1.0;
+			})
+			.start();
+	}
+
 	if ( key == 'F' ) {
 		// toggle fill mode on rects
-		this.filled = !this.filled;
-		for ( var r in this.rects ) {
-			this.rects[r].setFill( this.filled );
-		}
+		this.setFill( !this.filled );
 	}
 
 	if ( key == 'S' ) {

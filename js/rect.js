@@ -1,5 +1,5 @@
 var planeGeometry = new THREE.PlaneGeometry( 1, 1 );
-var planeMaterial = new THREE.MeshBasicMaterial( {color:0xffffff} );
+var planeMaterial = new THREE.MeshBasicMaterial( {color:0xffffff, transparent:true} );
 
 var squareShape = new THREE.Shape();
 squareShape.moveTo( -.5, -.5 );
