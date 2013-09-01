@@ -35,13 +35,24 @@ SplitterModule.prototype.update = function() {
 
 		rect.update();
 
-		if ( this.spinning ) {
-			rect.node.position.x += 10;
-			if ( rect.node.position.x - rect.getWidth()/2 > window.innerWidth ) {
-				rect.node.position.x -= window.innerWidth;
-			}
-		}
+		// if ( this.spinning ) {
+		// 	rect.node.position.x += 10;
+		// 	if ( rect.node.position.x - rect.getWidth()/2 > window.innerWidth ) {
+		// 		rect.node.position.x -= window.innerWidth;
+		// 	}
+		// }
 
+	}
+
+	if ( this.spinning ) {
+		for ( var n in this.node.children ) {
+			var node = this.node.children[n];
+			node.position.x -= 10;
+			if ( node.position.x > window.innerWidth )
+				node.position.x -= window.innerWidth;
+			else if ( node.position.x < 0 )
+				node.position.x += window.innerWidth;
+		}
 	}
 
 }
@@ -84,7 +95,7 @@ SplitterModule.prototype.key = function( key ) {
 		var newRects = rect.split( 10 );
 		for ( var r in newRects ) {
 			// add new rect's node to the top node
-			this.node.add( newRects[r].node );
+			// this.node.add( newRects[r].node );
 			// add it to our rect array
 			this.rects.push( newRects[r] );
 		}
