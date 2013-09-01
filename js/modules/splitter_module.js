@@ -25,7 +25,9 @@ SplitterModule.prototype.init = function() {
 	this.node.add( startRect.node );
 	this.rects.push( startRect );
 
-	this.spinning = false;
+	this.scrollSpeed = 1;
+	this.scrollMultiplier = 1;
+	this.gui.add( this, 'scrollSpeed', -50, 50 );
 }
 
 SplitterModule.prototype.update = function() {
@@ -34,25 +36,15 @@ SplitterModule.prototype.update = function() {
 		var rect = this.rects[r];
 
 		rect.update();
-
-		// if ( this.spinning ) {
-		// 	rect.node.position.x += 10;
-		// 	if ( rect.node.position.x - rect.getWidth()/2 > window.innerWidth ) {
-		// 		rect.node.position.x -= window.innerWidth;
-		// 	}
-		// }
-
 	}
 
-	if ( this.spinning ) {
-		for ( var n in this.node.children ) {
-			var node = this.node.children[n];
-			node.position.x -= 10;
-			if ( node.position.x > window.innerWidth )
-				node.position.x -= window.innerWidth;
-			else if ( node.position.x < 0 )
-				node.position.x += window.innerWidth;
-		}
+	for ( var n in this.node.children ) {
+		var node = this.node.children[n];
+		node.position.x -= this.scrollSpeed * this.scrollMultiplier;
+		if ( node.position.x > window.innerWidth )
+			node.position.x -= window.innerWidth;
+		else if ( node.position.x < 0 )
+			node.position.x += window.innerWidth;
 	}
 
 }
@@ -66,8 +58,16 @@ SplitterModule.prototype.setFill = function( fill ) {
 
 SplitterModule.prototype.key = function( key ) {
 
-	if ( key == 'M' ) {
-		this.spinning = !this.spinning;
+	if ( key == 'A' ) {
+		var tween = new TWEEN.Tween(this)
+			.to({scrollMultiplier:Math.abs(100/this.scrollSpeed)}, 100) // scroll multiplier always jumps speed up to 100
+			.start();
+
+		var tweenBack = new TWEEN.Tween(this)
+			.to({scrollMultiplier:1}, 500 )
+			.easing( TWEEN.Easing.Quadratic.InOut );
+
+		tween.chain(tweenBack);
 	}
 
 	if ( key == 'Q' ) {
