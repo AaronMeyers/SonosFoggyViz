@@ -24,3 +24,7 @@ EmptyModule.prototype.init = function() {
 EmptyModule.prototype.update = function() {
 
 }
+
+EmptyModule.prototype.key = function( key ) {
+
+}

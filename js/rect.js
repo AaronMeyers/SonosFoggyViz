@@ -17,6 +17,8 @@ Rect = function( x, y, width, height, filled ) {
 	// this.node.scale.y = height;
 	this.node.position.x = x;
 	this.node.position.y = y;
+	this.rotationX = 0;
+	this.rotationZ = 0;
 
 	// create a filled plane
 	this.plane = new THREE.Mesh( planeGeometry, planeMaterial );
@@ -54,12 +56,42 @@ Rect.prototype.update = function() {
 
 }
 
+Rect.prototype.getRotationX = function() {
+	return this.rotationX;
+}
+
+Rect.prototype.setRotationX = function( rotation ) {
+	for ( var c in this.node.children )
+		this.node.children[c].rotation.x = rotation;
+	this.rotationX = rotation;
+}
+
+Rect.prototype.getRotationZ = function() {
+	return this.rotation;
+}
+
+Rect.prototype.setRotationZ = function( rotation ) {
+	for ( var c in this.node.children )
+		this.node.children[c].rotation.z = rotation;
+	this.rotationZ = rotation;
+}
+
 Rect.prototype.getWidth = function() {
 	return this.plane.scale.x;
 }
 
+Rect.prototype.setWidth = function( width ) {
+	for ( var c in this.node.children )
+		this.node.children[c].scale.x = width;
+}
+
 Rect.prototype.getHeight = function() {
 	return this.plane.scale.y;
+}
+
+Rect.prototype.setHeight = function( height ) {
+	for ( var c in this.node.children )
+		this.node.children[c].scale.y = height;
 }
 
 Rect.prototype.split = function( margin ) {
