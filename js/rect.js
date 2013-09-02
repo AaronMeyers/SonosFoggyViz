@@ -64,7 +64,6 @@ Rect.prototype.getHeight = function() {
 
 Rect.prototype.split = function( margin ) {
 	// split the rectangle into 2 new rectangles
-
 	var destWidth = ( this.getWidth() / 2.0 ) - ( margin / 2.0 );
 	var rect1 = new Rect( this.node.position.x, this.node.position.y, this.getWidth(), this.getHeight() );
 	var rect2 = new Rect( this.node.position.x, this.node.position.y, this.getWidth(), this.getHeight() );
@@ -77,12 +76,15 @@ Rect.prototype.split = function( margin ) {
 	var rightX = rightEdge - destWidth/2;
 
 	var tempNode = new THREE.Object3D();
+	tempNode.name = "tempSplitNode";
 	tempNode.position = this.node.position;
 	tempNode.add( rect1.node );
 	tempNode.add( rect2.node );
 	this.node.parent.add( tempNode );
 	rect1.node.position.x = 0;
 	rect2.node.position.x = 0;
+	rect1.node.position.y = 0;
+	rect2.node.position.y = 0;
 	leftX -= tempNode.position.x;
 	rightX -= tempNode.position.x;
 
@@ -90,23 +92,38 @@ Rect.prototype.split = function( margin ) {
 	var callback = function() {
 		var parent = this.node.parent;
 		parent.parent.add( this.node );
-		if ( parent.children.length == 0 )
-			parent.parent.remove( this.node.parent );
+		if ( parent.children.length == 0 ) {
+			parent.parent.remove( parent );
+		}
 		this.node.position.x += parent.position.x;
+		this.node.position.y += parent.position.y;
 	}
 
 	var speed = 200;
-	rect1.setFill( this.isFilled ).animate( leftX, 0, destWidth, 100, speed, callback );
-	rect2.setFill( this.isFilled ).animate( rightX, 0, destWidth, 100, speed, callback );
+	rect1.setFill( this.isFilled ).animate( leftX, 0, destWidth, this.getHeight(), speed, callback );
+	rect2.setFill( this.isFilled ).animate( rightX, 0, destWidth, this.getHeight(), speed, callback );
 
 	return [ rect1, rect2 ];
 }
 
+Rect.prototype.extend = function( height, direction ) {
+	// extend the rectangle in one direction, maintaining the edge in the opposite direction
+	var bottomEdge = this.node.position.y - ( this.getHeight()/2 * direction );
+	var y = bottomEdge + ( height/2 * direction );
+	this.animate( undefined, y, this.getWidth(), height, 250 );
+}
+
+Rect.prototype.collapseCenter = function( height ) {
+	// collapse the rect to given height in the vertical center
+	this.animate( undefined, 0, this.getWidth(), height, 250 );
+}
+
 Rect.prototype.animate = function( x, y, width, height, time, callback ) {
-	// return;
+	
 	var tweenObj = {
+		rect: this,
 		node: this.node,
-		x: this.node.position.x,
+		x: x==undefined?undefined:this.node.position.x,
 		y: this.node.position.y,
 		width: this.getWidth(),
 		height: this.getHeight()
@@ -119,27 +136,30 @@ Rect.prototype.animate = function( x, y, width, height, time, callback ) {
 		.to( {x:x, y:y, width:width, height:height}, time )
 		.easing( TWEEN.Easing.Quadratic.InOut )
 		.onUpdate(function(){
-			this.node.position.x = this.x;
-			this.node.position.y = this.y;
+			// console.log( this.x );
+			if ( this.x != undefined )
+				this.node.position.x = this.x;
+			if ( this.y != undefined )
+				this.node.position.y = this.y;
 			for ( var c in this.node.children ) {
 				var child = this.node.children[c];
 				child.scale.x = this.width;
 				child.scale.y = this.height;
 			}
 		})
-		.onComplete( callback )
+		.onComplete(callback)
 		.start();
 }
 
 Rect.prototype.setFill = function( filled ) {
 	if ( filled ) {
 		this.isFilled = true;
-		this.wireframe.visible = this.wireframeL.visible = this.wireframeR.visible = false;
+		// this.wireframe.visible = this.wireframeL.visible = this.wireframeR.visible = false;
 		this.plane.visible = this.planeL.visible = this.planeR.visible = true;
 	}
 	else {
 		this.isFilled = false;
-		this.wireframe.visible = this.wireframeL.visible = this.wireframeR.visible = true;
+		// this.wireframe.visible = this.wireframeL.visible = this.wireframeR.visible = true;
 		this.plane.visible = this.planeL.visible = this.planeR.visible = false;
 	}
 

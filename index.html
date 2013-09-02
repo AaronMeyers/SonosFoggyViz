@@ -32,6 +32,8 @@
 		<script src="../three.js/examples/js/postprocessing/RenderPass.js"></script>
 		<script src="../three.js/examples/js/postprocessing/MaskPass.js"></script>
 		<script src="../three.js/examples/js/postprocessing/ShaderPass.js"></script>
+		<script src="../three.js/examples/js/postprocessing/SavePass.js"></script>
+		<script src="../three.js/examples/js/shaders/BlendShader.js"></script>
 		<!-- STUFF -->
 		<script src="./js/utils.js"></script>
 		<script src="./js/rect.js"></script>
@@ -55,6 +57,7 @@
 				vu: null,
 				testThing: 0,
 				testBool: false,
+				beat: false,
 			};
 
 			var audioContext;
@@ -84,6 +87,8 @@
 				edgeEffect2: false
 			};
 			var rgbShiftEffect, edgeEffect, edgeEffect2;
+
+			var effectSave, effectBlend;
 
 			init();
 			animate();
@@ -181,6 +186,15 @@
 				edgeEffect2.enabled = postProcessing.edgeEffect2;
 				composer.addPass( edgeEffect2 );
 
+				// // tried motion blur effect but it didn't really work out
+				// var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
+				// effectSave = new THREE.SavePass( new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, renderTargetParameters ) );
+				// effectBlend = new THREE.ShaderPass( THREE.BlendShader, "tDiffuse1" );
+				// effectBlend.uniforms[ 'tDiffuse2' ].value = effectSave.renderTarget;
+				// effectBlend.uniforms[ 'mixRatio' ].value = 0.15;
+				// composer.addPass(effectBlend);
+				// composer.addPass(effectSave);
+
 				var effect = new THREE.ShaderPass( THREE.CopyShader);
 				effect.renderToScreen = true;
 				composer.addPass( effect );
@@ -237,6 +251,7 @@
 
 					if (m_BeatTimer > (60.0 / audio.bd.win_bpm_int_lo)) {
 						// console.log( 'a beat: ' + m_BeatCounter );
+						audio.beat = true;
 						m_BeatTimer -= (60.0 / audio.bd.win_bpm_int_lo);
 						clearClr[0] = 0.5 + Math.random() / 2;
 						clearClr[1] = 0.5 + Math.random() / 2;
@@ -285,6 +300,9 @@
 
 				if ( activeModule )
 					activeModule.update();
+
+				if ( audio.beat )
+					audio.beat = false;
 
 				composer.render();
 				// renderer.render(scene, camera);
