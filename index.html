@@ -41,6 +41,7 @@
 		<script src="./js/modules/test_module.js"></script>
 		<script src="./js/modules/splitter_module.js"></script>
 		<script src="./js/modules/sinewave_module.js"></script>
+		<script src="./js/modules/dodeca_module.js"></script>
 		<script src="./js/modules/empty_module.js"></script>
 
 		<script>
@@ -133,7 +134,7 @@
 
 				gui.add( this, 'bpm' ).listen();
 
-				gui.add( this, 'module', ['testModule', 'splitterModule', 'sinewaveModule', 'emptyModule'] ).onChange( function( value ) {
+				gui.add( this, 'module', ['testModule', 'splitterModule', 'sinewaveModule', 'dodecaModule', 'emptyModule'] ).onChange( function( value ) {
 					activeModule.off();
 					activeModule = modules[value];
 					activeModule.on();
@@ -160,9 +161,10 @@
 				modules.testModule = new TestModule( audio, scene, gui.addFolder( 'Test Module' ) );
 				modules.splitterModule = new SplitterModule( audio, scene, gui.addFolder( 'Splitter Module' ) );
 				modules.sinewaveModule = new SinewaveModule( audio, scene, gui.addFolder( 'Sinewave Module' ) );
+				modules.dodecaModule = new DodecaModule( audio, scene, gui.addFolder( 'Dodeca Module' ) );
 				modules.emptyModule = new EmptyModule( audio, scene, gui.addFolder( 'Empty Module' ) );
 
-				module = 'sinewaveModule';
+				module = 'dodecaModule';
 				activeModule = modules[module];
 				activeModule.on();
 			}

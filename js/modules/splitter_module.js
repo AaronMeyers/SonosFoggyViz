@@ -122,7 +122,7 @@ SplitterModule.prototype.convergeAll = function() {
 			moduleNode.remove( tempNode );
 		}
 		var rect = this.rects.splice( 0, 1 );
-		rect[0].animate( 0, 0, window.innerWidth - 10, 100, 500, (this.rects.length==0)?keeperCallback:undefined );
+		rect[0].animate( window.innerWidth/2, 0, window.innerWidth - 10, 100, 500, (this.rects.length==0)?keeperCallback:undefined );
 		if ( this.rects.length == 0 ) {
 			keeper = rect[0];
 		}
@@ -141,7 +141,9 @@ SplitterModule.prototype.splitRandomRect = function() {
 	this.splitRect( rect );
 }
 
-SplitterModule.prototype.splitAllRects = function() {
+SplitterModule.prototype.splitAllRects = function( num ) {
+
+	num = (num==undefined)?2:num;
 
 	var rects = this.rects.slice(0);
 	for ( var r in rects ) {
@@ -149,12 +151,14 @@ SplitterModule.prototype.splitAllRects = function() {
 		if ( TWEEN.getAll().indexOf( rect.tween ) > -1 || rect.getWidth() < 20 )
 			continue;
 
-		this.splitRect( rect );
+		this.splitRect( rect, num );
 	}
 }
 
-SplitterModule.prototype.splitRect = function ( rect ) {
-	var newRects = rect.split( 10 );
+SplitterModule.prototype.splitRect = function ( rect, num ) {
+
+	// var newRects = (num==2) ? rect.split( 10 ) : rect.splitNum( num, 10 );
+	var newRects = rect.splitNum( num, 10 );
 	for ( var r in newRects ) {
 		this.rects.push( newRects[r] );
 	}
@@ -172,7 +176,7 @@ SplitterModule.prototype.key = function( key ) {
 	if ( key == 'E' ) {
 		for ( var r in this.rects ) {
 			var rect = this.rects[r];
-			rect.extend( utils.random( 200, 400 ), utils.randomSign() );
+			rect.extend( utils.random( 200, 400 ), utils.randomSign(), r * (250/this.rects.length) );
 		}
 	}
 	if ( key == 'R' ) {
@@ -180,6 +184,10 @@ SplitterModule.prototype.key = function( key ) {
 			var rect = this.rects[r];
 			rect.collapseCenter( 100 );
 		}
+	}
+
+	if ( key == 'T' ) {
+		this.splitAllRects(3);
 	}
 
 	if ( key == 'F' ) {

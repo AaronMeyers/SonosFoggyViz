@@ -45,9 +45,23 @@ SinewaveModule.prototype.init = function() {
 	this.scrollMultiplier = 1;
 	this.gui.add( this, 'scrollSpeed', -50, 50 );
 
+	this.vu_levels = new Array();
+	for ( var i=0;i<128; i++ ) {
+		// console.log( 'blah' );
+		this.vu_levels.push(.1);
+	}
 }
 
 SinewaveModule.prototype.update = function() {
+
+	if ( this.audio.vu.vu_levels.length > 0 ) {
+		for ( l in this.vu_levels ) {
+
+			this.vu_levels[l] = utils.lerp( this.vu_levels[l], this.audio.vu.vu_levels[l], .5 );
+			// if ( l==32 ) console.log( this.vu_levels[l] );
+		}
+	}
+
 
 	this.sineSeed += this.sineSpeed * this.sineSpeedMultiplier;
 
@@ -58,6 +72,8 @@ SinewaveModule.prototype.update = function() {
 		rect.node.position.y = sineVal * this.amplitude;
 		rect.setRotationX( sineVal * this.xRotation );
 		rect.setRotationZ( sineVal * this.zRotation );
+		// rect.setHeight( 500 - Math.max(this.vu_levels[r] * 500.0, .1 ) );
+
 		// rect.setHeight( Math.abs( rect.node.position.y ) * 3 );
 	}
 
