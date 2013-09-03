@@ -49,6 +49,7 @@
 		<!-- STUFF -->
 		<script src="./js/utils.js"></script>
 		<script src="./js/rect.js"></script>
+		<script src="./js/shaders/PolarShader.js"></script>
 		<!-- MODULES -->
 		<script src="./js/modules/test_module.js"></script>
 		<script src="./js/modules/splitter_module.js"></script>
@@ -100,9 +101,15 @@
 			var postProcessing = {
 				rgbShift: false,
 				edgeEffect: false,
-				edgeEffect2: false
+				edgeEffect2: false,
+				polarEffect: true,
+				rotation: 0.0,
+				offsetx: 0.0,
+				offsety: 0.0,
+				minRadius: 0.5,
+				maxRadius: 1.0,
 			};
-			var rgbShiftEffect, edgeEffect, edgeEffect2;
+			var rgbShiftEffect, edgeEffect, edgeEffect2, polarEffect;
 
 			var effectSave, effectBlend;
 
@@ -169,6 +176,24 @@
 				ppFolder.add( postProcessing, 'edgeEffect2' ).onChange( function( value ) {
 					edgeEffect2.enabled = value;
 				});
+				ppFolder.add( postProcessing, 'polarEffect' ).onChange( function( value ) {
+					polarEffect.enabled = value;
+				});
+				ppFolder.add( postProcessing, 'rotation' ).onChange( function( value ) {
+					polarEffect.uniforms[ 'rotation' ].value = value;
+				});
+				ppFolder.add( postProcessing, 'offsetx' ).onChange( function( value ) {
+					polarEffect.uniforms[ 'offset' ].value.x = value;
+				});
+				ppFolder.add( postProcessing, 'offsety' ).onChange( function( value ) {
+					polarEffect.uniforms[ 'offset' ].value.y = value;
+				});
+				ppFolder.add( postProcessing, 'minRadius' ).onChange( function( value ) {
+					polarEffect.uniforms[ 'minRadius' ].value = value;
+				});
+				ppFolder.add( postProcessing, 'maxRadius' ).onChange( function( value ) {
+					polarEffect.uniforms[ 'maxRadius' ].value = value;
+				});
 			}
 
 			function initModules() {
@@ -204,7 +229,18 @@
 				edgeEffect2.enabled = postProcessing.edgeEffect2;
 				composer.addPass( edgeEffect2 );
 
-
+				polarEffect = new THREE.ShaderPass( THREE.PolarShader );
+				polarEffect.uniforms[ 'aspect' ].value.x = window.innerWidth;
+				polarEffect.uniforms[ 'aspect' ].value.y = window.innerHeight;
+				polarEffect.uniforms[ 'maxRadius' ].value = 1;
+				polarEffect.uniforms[ 'minRadius' ].value = .5;
+				polarEffect.uniforms[ 'rotation' ].value = 0;
+				polarEffect.uniforms[ 'offset' ].value.x = 0;
+				polarEffect.uniforms[ 'offset' ].value.y = 0;
+				polarEffect.enabled = postProcessing.polarEffect;
+				// maybe you can make it faster by removing the last render to screen and making the polarEffect render to screen instead
+				// polarEffect.renderToScreen = true;
+				composer.addPass( polarEffect );
 
 				// // tried motion blur effect but it didn't really work out
 				// var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
@@ -317,8 +353,8 @@
                 }
                 avg_sum /= vu_avgs.length;
                 $('#vu_avg').text( 'VU Average: ' + avg_sum.toFixed(3) );
-                if ( avg.avg > avg_sum * 3.0 )
-                	console.log( 'bam: ' + avg.avg );
+                // if ( avg.avg > avg_sum * 3.0 )
+                // 	console.log( 'bam: ' + avg.avg );
                 // console.log( avg );
 
 
@@ -340,6 +376,8 @@
 				edgeEffect.uniforms[ 'aspect' ].value.y = window.innerHeight;
 				edgeEffect2.uniforms[ 'aspect' ].value.x = window.innerWidth;
 				edgeEffect2.uniforms[ 'aspect' ].value.y = window.innerHeight;
+				polarEffect.uniforms[ 'aspect' ].value.x = window.innerWidth;
+				polarEffect.uniforms[ 'aspect' ].value.y = window.innerHeight;
 			}
 
 			function animate() {
