@@ -35,19 +35,19 @@ DodecaModule.prototype.init = function() {
 
 DodecaModule.prototype.squishUp = function() {
 	for ( r in this.rects )
-		this.rects[r].extend( 100, -1, (500/this.rects.length)*r );
+		this.rects[r].extend( 100, -1, (200/this.rects.length)*utils.random(this.rects.length) );
 	this.squished = true;
 }
 
 DodecaModule.prototype.squishDown = function() {
 	for ( r in this.rects )
-		this.rects[r].extend( 100, 1, (500/this.rects.length)*r );
+		this.rects[r].extend( 100, 1, (200/this.rects.length)*utils.random(this.rects.length) );
 	this.squished = true;
 }
 
 DodecaModule.prototype.unsquish = function() {
 	for ( r in this.rects )
-		this.rects[r].animate( null, 0, null, this.restingHeight, 250, null, (500/this.rects.length)*r );
+		this.rects[r].animate( null, 0, null, this.restingHeight, 250, null, (200/this.rects.length)*utils.random(this.rects.length) );
 	this.squished = false;
 }
 

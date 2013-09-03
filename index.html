@@ -13,11 +13,23 @@
 			label, input {
 				cursor: pointer;
 			}
+
+			#debug {
+				color: white;
+				position: absolute;
+				font-family: Helvetica;
+				background: rgba(255,255,255,.2);
+			}
 		</style>
 	</head>
 	<body>
 
+		<div id="debug">
+			<span id="vu_avg"></span>
+		</div>
+
 		<!-- VARIOUS LIBS -->
+		<script src="./js/jquery-2.0.3.min.js"></script>
 		<script src="./js/fft.js"></script>
 		<script src="./js/beatdetektor.js"></script>
 		<script src="./js/dat.gui.min.js"></script>
@@ -61,6 +73,8 @@
 				testBool: false,
 				beat: false,
 			};
+
+			var vu_avgs = new Array();
 
 			var audioContext;
 			var audioSource;
@@ -164,7 +178,7 @@
 				modules.dodecaModule = new DodecaModule( audio, scene, gui.addFolder( 'Dodeca Module' ) );
 				modules.emptyModule = new EmptyModule( audio, scene, gui.addFolder( 'Empty Module' ) );
 
-				module = 'dodecaModule';
+				module = 'testModule';
 				activeModule = modules[module];
 				activeModule.on();
 			}
@@ -189,6 +203,8 @@
 				edgeEffect2.uniforms[ 'aspect' ].value.y = window.innerHeight;
 				edgeEffect2.enabled = postProcessing.edgeEffect2;
 				composer.addPass( edgeEffect2 );
+
+
 
 				// // tried motion blur effect but it didn't really work out
 				// var renderTargetParameters = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, stencilBuffer: false };
@@ -278,6 +294,36 @@
 				}
 
                 audio.vu.process(audio.bd, event.timeStamp / 1000);
+
+                var highest = 0;
+                var cumulative = 0;
+                for ( l in audio.vu.vu_levels ) {
+                	var level = audio.vu.vu_levels[l];
+                	cumulative += level;
+                	if ( level > highest )
+                		highest = level;
+                }
+
+                var avg = { time:event.timeStamp, avg:cumulative/audio.vu.vu_levels.length };
+                vu_avgs.push( avg );
+                var avg_sum = 0;
+                // clean out averages older than 1 second
+                for ( var i=0; i<vu_avgs.length; i++ ) {
+                	if ( event.timeStamp - vu_avgs[i].time > 1000 ) {
+                		vu_avgs.splice( i--, 1 );
+                	}
+                	else 
+                		avg_sum += vu_avgs[i].avg;
+                }
+                avg_sum /= vu_avgs.length;
+                $('#vu_avg').text( 'VU Average: ' + avg_sum.toFixed(3) );
+                if ( avg.avg > avg_sum * 3.0 )
+                	console.log( 'bam: ' + avg.avg );
+                // console.log( avg );
+
+
+
+                // $('#debug').text( 'highest level: ' + highest.toFixed(2) );
 			}
 
 			function onWindowResize() {
