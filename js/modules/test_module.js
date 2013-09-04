@@ -40,6 +40,10 @@ TestModule.prototype.init = function() {
 	}
 }
 
+TestModule.prototype.key = function( key ) {
+	
+}
+
 TestModule.prototype.update = function() {
 
 	if ( this.audio.vu.vu_levels.length == 0 )

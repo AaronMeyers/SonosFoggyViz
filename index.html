@@ -50,12 +50,15 @@
 		<script src="./js/utils.js"></script>
 		<script src="./js/rect.js"></script>
 		<script src="./js/shaders/PolarShader.js"></script>
+		<script src="./js/ribbon.js"></script>
+		<script src="./js/horizontals.js"></script>
 		<!-- MODULES -->
 		<script src="./js/modules/test_module.js"></script>
 		<script src="./js/modules/splitter_module.js"></script>
 		<script src="./js/modules/sinewave_module.js"></script>
 		<script src="./js/modules/dodeca_module.js"></script>
 		<script src="./js/modules/empty_module.js"></script>
+		<script src="./js/modules/ribbon_module.js"></script>
 
 		<script>
 			var gui;
@@ -102,7 +105,7 @@
 				rgbShift: false,
 				edgeEffect: false,
 				edgeEffect2: false,
-				polarEffect: true,
+				polarEffect: false,
 				rotation: 0.0,
 				offsetx: 0.0,
 				offsety: 0.0,
@@ -155,7 +158,7 @@
 
 				gui.add( this, 'bpm' ).listen();
 
-				gui.add( this, 'module', ['testModule', 'splitterModule', 'sinewaveModule', 'dodecaModule', 'emptyModule'] ).onChange( function( value ) {
+				gui.add( this, 'module', ['testModule', 'ribbonModule', 'splitterModule', 'sinewaveModule', 'dodecaModule', 'emptyModule'] ).onChange( function( value ) {
 					activeModule.off();
 					activeModule = modules[value];
 					activeModule.on();
@@ -182,16 +185,16 @@
 				ppFolder.add( postProcessing, 'rotation' ).onChange( function( value ) {
 					polarEffect.uniforms[ 'rotation' ].value = value;
 				});
-				ppFolder.add( postProcessing, 'offsetx' ).onChange( function( value ) {
+				ppFolder.add( postProcessing, 'offsetx', -.5, .5 ).step(.01).onChange( function( value ) {
 					polarEffect.uniforms[ 'offset' ].value.x = value;
 				});
-				ppFolder.add( postProcessing, 'offsety' ).onChange( function( value ) {
+				ppFolder.add( postProcessing, 'offsety', -.5, .5 ).step(.01).onChange( function( value ) {
 					polarEffect.uniforms[ 'offset' ].value.y = value;
 				});
-				ppFolder.add( postProcessing, 'minRadius' ).onChange( function( value ) {
+				ppFolder.add( postProcessing, 'minRadius', 0, 1 ).onChange( function( value ) {
 					polarEffect.uniforms[ 'minRadius' ].value = value;
 				});
-				ppFolder.add( postProcessing, 'maxRadius' ).onChange( function( value ) {
+				ppFolder.add( postProcessing, 'maxRadius', .5, 1 ).onChange( function( value ) {
 					polarEffect.uniforms[ 'maxRadius' ].value = value;
 				});
 			}
@@ -201,9 +204,10 @@
 				modules.splitterModule = new SplitterModule( audio, scene, gui.addFolder( 'Splitter Module' ) );
 				modules.sinewaveModule = new SinewaveModule( audio, scene, gui.addFolder( 'Sinewave Module' ) );
 				modules.dodecaModule = new DodecaModule( audio, scene, gui.addFolder( 'Dodeca Module' ) );
+				modules.ribbonModule = new RibbonModule( audio, scene, gui.addFolder( 'Ribbon Module' ) );
 				modules.emptyModule = new EmptyModule( audio, scene, gui.addFolder( 'Empty Module' ) );
 
-				module = 'testModule';
+				module = 'ribbonModule';
 				activeModule = modules[module];
 				activeModule.on();
 			}
