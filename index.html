@@ -119,6 +119,9 @@
 				minRadius: 0.5,
 				maxRadius: 1.0,
 			};
+
+			var blackoutPlane;
+			var blackoutOpacity;
 			var rgbShiftEffect, edgeEffect, edgeEffect2, polarEffect;
 
 			var effectSave, effectBlend;
@@ -139,7 +142,15 @@
 				camera = new THREE.OrthographicCamera( 0, window.innerWidth, window.innerHeight / 2, window.innerHeight / - 2, - 500, 1000 );
 				camera.position.z = 400;
 
-				// initRects();
+				var planeGeom = new THREE.PlaneGeometry( 1, 1, 1, 1 );
+				var planeMaterial = new THREE.MeshBasicMaterial({color:0x000000,transparent:true});
+				blackoutPlane = new THREE.Mesh( planeGeom, planeMaterial );
+				blackoutPlane.scale.x = window.innerWidth;
+				blackoutPlane.scale.y = window.innerHeight;
+				blackoutPlane.position.x = window.innerWidth * .5;
+				blackoutPlane.position.z = 100;
+				blackoutPlane.visible = false;
+				scene.add( blackoutPlane );
 
 				initPostProcessing();
 
@@ -157,7 +168,6 @@
 				var theChar = String.fromCharCode( event.which );
 				if ( parseInt( theChar ) ) {
 					var num = parseInt( theChar) - 1;
-					console.log( num );
 					if ( num < moduleNames.length )
 						switchModule( moduleNames[num] );
 				}
@@ -170,10 +180,34 @@
 				if ( modules[moduleName] == undefined )
 					return;
 
-				activeModule.off();
-				activeModule = modules[moduleName];
-				module = moduleName;
-				activeModule.on();
+				blackoutOpacity = 0;
+				blackoutPlane.visible = true;
+				var fadeOutTween = new TWEEN.Tween(this)
+					.to({blackoutOpacity:1}, 500)
+					.onUpdate(function(){
+						blackoutPlane.material.opacity = blackoutOpacity;
+					})
+					.onComplete(function(){
+						activeModule.off();
+						activeModule = modules[moduleName];
+						module = moduleName;
+						activeModule.on();
+					})
+					.start();
+
+				var fadeUpTween = new TWEEN.Tween(this)
+					.to({blackoutOpacity:0},500)
+					.onUpdate(function(){
+						blackoutPlane.material.opacity = blackoutOpacity;
+					});
+
+				fadeOutTween.chain(fadeUpTween);
+
+
+				// activeModule.off();
+				// activeModule = modules[moduleName];
+				// module = moduleName;
+				// activeModule.on();
 			}
 
 			function initGUI() {
@@ -399,6 +433,10 @@
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				blackoutPlane.scale.x = window.innerWidth;
+				blackoutPlane.scale.y = window.innerHeight;
+				blackoutPlane.position.x = window.innerWidth * .5;
 
 				edgeEffect.uniforms[ 'aspect' ].value.x = window.innerWidth;
 				edgeEffect.uniforms[ 'aspect' ].value.y = window.innerHeight;
