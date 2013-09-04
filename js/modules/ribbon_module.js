@@ -48,7 +48,8 @@ RibbonModule.prototype.key = function( key ) {
 	}
 	if ( key == 'Q' ) {
 		for ( var r in this.ribbons )
-			this.ribbons[r].jumble();
+			this.ribbons[r].jumble( 500 );
+		this.strobe( 500 );
 	}
 	if ( key == 'T' ) {
 		this.toggle( !this.toggled );

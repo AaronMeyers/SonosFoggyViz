@@ -45,10 +45,10 @@ function Ribbon()
 		this.positions.push( new THREE.Vector3( i*i, i * 30, 0 ) );
 	}
 
-	this.jumble = function() {
+	this.jumble = function( time ) {
 		for ( var i=1; i<this.splinePoints.length-1; i++ ) {
 			var tween = new TWEEN.Tween(this.splinePoints[i])
-				.to({x:utils.random(-300,300)}, 200)
+				.to({x:utils.random(-300,300)}, time)
 				.easing( TWEEN.Easing.Quadratic.InOut )
 				.start();
 		}

@@ -100,6 +100,13 @@
 			var modules = {};
 			var module = '';
 			var activeModule;
+			var moduleNames = [
+				'testModule',
+				'ribbonModule',
+				'splitterModule',
+				'sinewaveModule',
+				'dodecaModule',
+			];
 
 			var postProcessing = {
 				rgbShift: false,
@@ -147,7 +154,26 @@
 			}
 
 			function onKeyDown( event ) {
-				activeModule.key( String.fromCharCode( event.which ) );
+				var theChar = String.fromCharCode( event.which );
+				if ( parseInt( theChar ) ) {
+					var num = parseInt( theChar) - 1;
+					console.log( num );
+					if ( num < moduleNames.length )
+						switchModule( moduleNames[num] );
+				}
+				else {
+					activeModule.key( theChar );
+				}
+			}
+
+			function switchModule( moduleName ) {
+				if ( modules[moduleName] == undefined )
+					return;
+
+				activeModule.off();
+				activeModule = modules[moduleName];
+				module = moduleName;
+				activeModule.on();
 			}
 
 			function initGUI() {
@@ -158,10 +184,8 @@
 
 				gui.add( this, 'bpm' ).listen();
 
-				gui.add( this, 'module', ['testModule', 'ribbonModule', 'splitterModule', 'sinewaveModule', 'dodecaModule', 'emptyModule'] ).onChange( function( value ) {
-					activeModule.off();
-					activeModule = modules[value];
-					activeModule.on();
+				gui.add( this, 'module', moduleNames ).onChange( function( value ) {
+					switchModule( value );
 				}).listen();
 
 				// var audioFolder = gui.addFolder( 'Audio' );
@@ -205,9 +229,9 @@
 				modules.sinewaveModule = new SinewaveModule( audio, scene, gui.addFolder( 'Sinewave Module' ) );
 				modules.dodecaModule = new DodecaModule( audio, scene, gui.addFolder( 'Dodeca Module' ) );
 				modules.ribbonModule = new RibbonModule( audio, scene, gui.addFolder( 'Ribbon Module' ) );
-				modules.emptyModule = new EmptyModule( audio, scene, gui.addFolder( 'Empty Module' ) );
+				// modules.emptyModule = new EmptyModule( audio, scene, gui.addFolder( 'Empty Module' ) );
 
-				module = 'ribbonModule';
+				module = moduleNames[0];
 				activeModule = modules[module];
 				activeModule.on();
 			}
