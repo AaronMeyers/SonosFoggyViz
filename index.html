@@ -17,15 +17,30 @@
 			#debug {
 				color: white;
 				position: absolute;
-				font-family: Helvetica;
+				font-family: Monaco;
 				background: rgba(255,255,255,.2);
+				min-width: 200px;
+			}
+			.box1 {
+				/*font-size:35px;*/
+				font-family:Tahoma;
+				padding-left:18px;
+				/*border:1px solid red;*/
+				overflow:hidden;
+				background-color: white;
 			}
 		</style>
 	</head>
 	<body>
 
 		<div id="debug">
-			<span id="vu_avg"></span>
+			BEAT:<span id="beat" class="box1"></span><br/>
+			KICK:<span id="kick" class="box1"></span><br/>
+			<span id="vu_avg"></span><br/>
+			<span id="spectralCentroid"></span><br/>
+			<span id="spectralCentroidVelocity"></span><br/>
+			<span id="noisiness"></span><br/>
+			<span id="lerpedNoise"></span><br/>
 		</div>
 
 		<!-- VARIOUS LIBS -->
@@ -76,6 +91,11 @@
 				testThing: 0,
 				testBool: false,
 				beat: false,
+				spectralCentroid: 0,
+				lastSpectralCentroid:0,
+				noisiness:0,
+				lerpedNoise:0,
+
 			};
 
 			var vu_avgs = new Array();
@@ -93,6 +113,7 @@
 			var lastKick = new Date().getTime();
 			var kickThreshold = 500; // minimum threshold between kicks in ms
 			var displayFFT = false;
+			var scVelThresh = 80;
 
 			var camera, scene, renderer, composer;
 
@@ -217,6 +238,8 @@
 				});
 
 				gui.add( this, 'bpm' ).listen();
+				gui.add( this, 'scVelThresh', 50, 150 ).step( 1 );
+				gui.add( this, 'kickThreshold', 100, 1000 );
 
 				gui.add( this, 'module', moduleNames ).onChange( function( value ) {
 					switchModule( value );
@@ -369,11 +392,9 @@
 
 					if (m_BeatTimer > (60.0 / audio.bd.win_bpm_int_lo)) {
 						// console.log( 'a beat: ' + m_BeatCounter );
+						$('#beat').show().fadeOut();
 						audio.beat = true;
 						m_BeatTimer -= (60.0 / audio.bd.win_bpm_int_lo);
-						clearClr[0] = 0.5 + Math.random() / 2;
-						clearClr[1] = 0.5 + Math.random() / 2;
-						clearClr[2] = 0.5 + Math.random() / 2;
 						m_BeatCounter++;
 					}
 				}
@@ -382,14 +403,6 @@
 
 				audio.kick_det.process( audio.bd );
 
-				if ( audio.kick_det.isKick() ) {
-					var diff = event.timeStamp - lastKick;
-					if ( diff > kickThreshold ) {
-						// A KICK HAPPENED HERE
-						lastKick = event.timeStamp;
-					}
-
-				}
 
                 audio.vu.process(audio.bd, event.timeStamp / 1000);
 
@@ -420,8 +433,53 @@
                 // console.log( avg );
 
 
+                // KICK DRUM
+				if ( audio.kick_det.isKick() ) {
+					var diff = event.timeStamp - lastKick;
+					if ( diff > kickThreshold ) {
+						lastKick = event.timeStamp;
+						$('#kick').show();
+						$('#kick').fadeOut();
+					}
 
-                // $('#debug').text( 'highest level: ' + highest.toFixed(2) );
+				}
+
+                // SPECTRAL CENTROID
+                var spectralCentroid = 0;
+				var spectralWeights = 0;
+				var n = audio.fft.spectrum.length;
+				for(var i = 0; i < n; i++) {
+					var curWeight = audio.fft.spectrum[i];
+					spectralCentroid += i * curWeight;
+					spectralWeights += curWeight;
+				}
+				spectralCentroid /= spectralWeights;
+				spectralCentroid /= n;
+				spectralCentroid *= 1000;
+				audio.lastSpectralCentroid = audio.spectralCentroid;
+				audio.spectralCentroid = spectralCentroid;
+				var scVel = (audio.spectralCentroid - audio.lastSpectralCentroid);
+				$('#spectralCentroid').text( 'Spectral Centroid: ' + audio.spectralCentroid.toFixed(3) );
+				$('#spectralCentroidVelocity').text( 'Spectral Centroid Velocity: ' + scVel.toFixed(3) );
+				if ( scVel > scVelThresh ) {
+					// console.log( 'big sc change: ' + scVel );
+				}
+
+				// NOISINESS
+				var noisiness = 0;
+				for(var i = 0; i < n; i++) {
+					var curWeight = audio.fft.spectrum[i];
+					var curDiff = curWeight - spectralWeights;
+					noisiness += curDiff * curDiff;
+				}
+				noisiness = Math.sqrt(noisiness / n);
+				noisiness /= n;
+				noisiness *= 10000;
+				audio.noisiness = noisiness;
+				audio.lerpedNoise = utils.lerp( audio.lerpedNoise, noisiness, .5 );
+				// audio.noisiness = utils.lerp( audio.noisiness, noisiness, .5 );
+				$('#noisiness').text( 'Noisiness: ' + audio.noisiness.toFixed(3) );
+				$('#lerpedNoise').text( 'Lerped Noise: '+ audio.lerpedNoise.toFixed(3) );
 			}
 
 			function onWindowResize() {
