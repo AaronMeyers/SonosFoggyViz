@@ -10,37 +10,30 @@ THREE.PolarShader = {
 	},
 
 	vertexShader: [
-		"varying vec2 vUv;",
+		"varying vec2 screenPosition;",
+		"uniform vec2 offset, aspect;",
+
 		"void main() {",
-			"vUv = uv;",
+			"screenPosition = uv - offset - vec2(.5, .5);",
+			"screenPosition.x *= (aspect.x / aspect.y);",
 			"gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
 		"}"
 	].join("\n"),
 
 	fragmentShader: [
 		"uniform sampler2D tDiffuse;",
-		"varying vec2 vUv;",
-		"uniform vec2 offset, aspect;",
+		"varying vec2 screenPosition;",
 		"uniform float minRadius, maxRadius, rotation;",
 
 		"const float TWO_PI = 6.2831853072;",
 
-		"float map(float x, float inmin, float inmax, float outmin, float outmax) {",
-		  "return ((x-inmin) / (inmax-inmin)) * (outmax-outmin) + outmin;",
-		"}",
-
 		"void main() {",
-			"vec2 center = vec2(.5, .5);",
-			"vec2 screenPosition = vUv - center + offset;",
-			"screenPosition.x *= (aspect.x / aspect.y);",
-			"float theta = atan(screenPosition.y, screenPosition.x);",
-			"theta += rotation;",
-			"theta = theta / TWO_PI;",
-			"theta = mod(theta, 1.);",
 			"float radius = length(screenPosition) * 2.;",
-			"radius = map(radius, minRadius, maxRadius, 0., 1.);",
-			"vec2 polar = vec2(theta, radius);",
-			"gl_FragColor = texture2D(tDiffuse, polar);",
+			"if(radius > maxRadius || radius < minRadius) discard;",
+			"radius = (radius - minRadius) / (maxRadius - minRadius);",
+			"float theta = atan(screenPosition.y, screenPosition.x);",
+			"theta = mod((theta + rotation) / TWO_PI, 1.);",
+			"gl_FragColor = texture2D(tDiffuse, vec2(theta, radius));",
 		"}",
 	].join("\n")
 
