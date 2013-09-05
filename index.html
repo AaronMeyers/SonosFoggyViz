@@ -36,6 +36,7 @@
 		<div id="debug">
 			BEAT:<span id="beat" class="box1"></span><br/>
 			KICK:<span id="kick" class="box1"></span><br/>
+			VU HIT:<span id="vu_hit" class="box1"></span><br/>
 			<span id="vu_avg"></span><br/>
 			<span id="spectralCentroid"></span><br/>
 			<span id="spectralCentroidVelocity"></span><br/>
@@ -93,10 +94,17 @@
 				beat: false,
 				spectralCentroid: 0,
 				lastSpectralCentroid:0,
+				lerpedSpectralCentroid:0,
 				noisiness:0,
 				lerpedNoise:0,
-
+				pastSpectrals:[],
+				spectralAvg:0,
+				pastNoises:[],
+				noiseAvg:0
 			};
+
+			var maxNoises = 10;
+			var maxSpectrals = 10;
 
 			var vu_avgs = new Array();
 
@@ -210,9 +218,11 @@
 					})
 					.onComplete(function(){
 						activeModule.off();
+						activeModule.gui.close();
 						activeModule = modules[moduleName];
 						module = moduleName;
 						activeModule.on();
+						activeModule.gui.open();
 					})
 					.start();
 
@@ -238,8 +248,10 @@
 				});
 
 				gui.add( this, 'bpm' ).listen();
-				gui.add( this, 'scVelThresh', 50, 150 ).step( 1 );
-				gui.add( this, 'kickThreshold', 100, 1000 );
+				// gui.add( this, 'scVelThresh', 50, 150 ).step( 1 );
+				// gui.add( this, 'kickThreshold', 100, 1000 );
+				gui.add( this, 'maxNoises', 5, 30 );
+				gui.add( this, 'maxSpectrals', 5, 30 );
 
 				gui.add( this, 'module', moduleNames ).onChange( function( value ) {
 					switchModule( value );
@@ -291,6 +303,7 @@
 				module = moduleNames[0];
 				activeModule = modules[module];
 				activeModule.on();
+				activeModule.gui.open();
 			}
 
 			function initPostProcessing() {
@@ -458,12 +471,21 @@
 				spectralCentroid *= 1000;
 				audio.lastSpectralCentroid = audio.spectralCentroid;
 				audio.spectralCentroid = spectralCentroid;
+				audio.lerpedSpectralCentroid = utils.lerp( audio.lerpedSpectralCentroid, spectralCentroid, .5 );
 				var scVel = (audio.spectralCentroid - audio.lastSpectralCentroid);
 				$('#spectralCentroid').text( 'Spectral Centroid: ' + audio.spectralCentroid.toFixed(3) );
 				$('#spectralCentroidVelocity').text( 'Spectral Centroid Velocity: ' + scVel.toFixed(3) );
-				if ( scVel > scVelThresh ) {
-					// console.log( 'big sc change: ' + scVel );
-				}
+				// ANALYZE SPECTRAL CENTROID OVER TIME
+				while ( audio.pastSpectrals.length > maxSpectrals )
+					audio.pastSpectrals.splice( 0, 1 );
+				// calc average
+				audio.spectralAvg = 0;
+				for ( var i=0; i<audio.pastSpectrals.length; i++ )
+					audio.spectralAvg += audio.pastSpectrals[i];
+				audio.spectralAvg /= audio.pastSpectrals.length;
+				// add newest spectral centroid
+				audio.pastSpectrals.push( audio.spectralCentroid );
+
 
 				// NOISINESS
 				var noisiness = 0;
@@ -480,6 +502,16 @@
 				// audio.noisiness = utils.lerp( audio.noisiness, noisiness, .5 );
 				$('#noisiness').text( 'Noisiness: ' + audio.noisiness.toFixed(3) );
 				$('#lerpedNoise').text( 'Lerped Noise: '+ audio.lerpedNoise.toFixed(3) );
+				// ANALYZE NOISE OVER TIME
+				while ( audio.pastNoises.length > maxNoises )
+					audio.pastNoises.splice( 0, 1 );
+				// calc average
+				audio.noiseAvg = 0;
+				for ( var i=0; i<audio.pastNoises.length; i++ )
+					audio.noiseAvg += audio.pastNoises[i];
+				audio.noiseAvg /= audio.pastNoises.length;
+				// add newest noise after average has been taken
+				audio.pastNoises.push( audio.noisiness );
 			}
 
 			function onWindowResize() {
