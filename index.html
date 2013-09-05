@@ -97,14 +97,14 @@
 				testBool: false,
 				beat: false,
 				spectralCentroid: 0,
-				lastSpectralCentroid:0,
-				lerpedSpectralCentroid:0,
 				noisiness:0,
-				lerpedNoise:0,
 				pastSpectrals:[],
 				spectralAvg:0,
 				pastNoises:[],
-				noiseAvg:0
+				noiseAvg:0,
+				noiseHits: 0, // how many consecutive noise values have been above the average
+				noiseHitsRed: 0, // since we've begun counting hits, how many have gone red ( > 1.5 the avg )
+				useAudio: false,
 			};
 
 			var maxNoises = 10;
@@ -206,6 +206,12 @@
 
 			function onKeyDown( event ) {
 				var theChar = String.fromCharCode( event.which );
+
+				if ( event.which == 27 ) {
+					if ( audio.fft ) {
+						audio.useAudio = !audio.useAudio;
+					}
+				}
 
 				if ( event.which == 192 ) {
 					if ( $('#debug').css('display') == 'none' ) {
@@ -397,6 +403,7 @@
 					audioData.connect( audioContext.destination );
 					// set up our FFT analyzer
 					audio.fft = new FFT(audio.bufferSize, audio.rate);
+					audio.useAudio = true;
 				});
 				// initialize beat detector and modules
 				audio.bd = new BeatDetektor();
@@ -405,7 +412,7 @@
 			}
 
 			function doWebkitAudio() {
-				if ( !audio.fft ) {
+				if ( !audio.fft || !audio.useAudio ) {
 					return;
 				}
 
@@ -491,12 +498,8 @@
 				spectralCentroid /= spectralWeights;
 				spectralCentroid /= n;
 				spectralCentroid *= 1000;
-				audio.lastSpectralCentroid = audio.spectralCentroid;
 				audio.spectralCentroid = spectralCentroid;
-				audio.lerpedSpectralCentroid = utils.lerp( audio.lerpedSpectralCentroid, spectralCentroid, .5 );
-				var scVel = (audio.spectralCentroid - audio.lastSpectralCentroid);
 				$('#spectralCentroid').text( 'Spectral Centroid: ' + audio.spectralCentroid.toFixed(3) );
-				$('#spectralCentroidVelocity').text( 'Spectral Centroid Velocity: ' + scVel.toFixed(3) );
 				// ANALYZE SPECTRAL CENTROID OVER TIME
 				while ( audio.pastSpectrals.length > maxSpectrals )
 					audio.pastSpectrals.splice( 0, 1 );
@@ -520,10 +523,7 @@
 				noisiness /= n;
 				noisiness *= 10000;
 				audio.noisiness = noisiness;
-				audio.lerpedNoise = utils.lerp( audio.lerpedNoise, noisiness, .5 );
-				// audio.noisiness = utils.lerp( audio.noisiness, noisiness, .5 );
 				$('#noisiness').text( 'Noisiness: ' + audio.noisiness.toFixed(3) );
-				$('#lerpedNoise').text( 'Lerped Noise: '+ audio.lerpedNoise.toFixed(3) );
 				// ANALYZE NOISE OVER TIME
 				while ( audio.pastNoises.length > maxNoises )
 					audio.pastNoises.splice( 0, 1 );
@@ -534,6 +534,16 @@
 				audio.noiseAvg /= audio.pastNoises.length;
 				// add newest noise after average has been taken
 				audio.pastNoises.push( audio.noisiness );
+				if ( audio.noisiness / audio.noiseAvg > 1.0 ) {
+					if ( audio.noisiness / audio.noiseAvg >= 1.5 )
+						audio.noiseHitsRed++;
+					audio.noiseHits++;
+				}
+				else if ( audio.noiseHits != 0 ) {
+					// console.log( 'resetting noise hits: ' + audio.noiseHits );
+					audio.noiseHits = 0;
+					audio.noiseHitsRed = 0;
+				}
 			}
 
 			function onWindowResize() {

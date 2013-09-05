@@ -36,19 +36,65 @@ RibbonModule.prototype.init = function() {
 	}
 	this.lines = new Horizontals( 20 );
 	this.node.add( this.lines.node );
+
+	this.hitCount = 0;
+	this.lastHit = new Date().getTime();
+	this.hitThreshold = 500;
+	this.gui.add( this, 'hitThreshold', 100, 1000 );
 	
+}
+
+
+RibbonModule.prototype.update = function() {
+	// console.log( mouseX, mouseY );
+
+	if ( this.audio.useAudio ) {
+
+		var time = new Date().getTime();
+		var sinceLastHit = time - this.lastHit;
+		if ( this.audio.noiseHitsRed == 1 && this.audio.noisiness / this.audio.noiseAvg >= 1.5 && sinceLastHit > this.hitThreshold ) {
+			console.log( 'since last hit: ' + sinceLastHit );
+			this.hitCount++;
+			this.lastHit = time;
+
+			var option = this.hitCount % 3;
+			if ( option==0 )
+				this.jumble( 200 );
+			if ( option==1 )
+				this.strobe( 200 );
+			if ( option==2 )
+				this.throttle( 30, 200, 500 );
+		}
+			// console.log( 'do something: ' + this.audio.noisiness );
+
+	}
+
+	// this.ribbon.update();
+	for ( var r in this.ribbons ) {
+		this.ribbons[r].update();
+	}
+	this.lines.update();
+}
+
+
+RibbonModule.prototype.jumble = function( speed ) {
+	for ( var r in this.ribbons )
+		this.ribbons[r].jumble( speed );
+}
+
+RibbonModule.prototype.throttle = function( amount, time1, time2 ) {
+	for ( var r in this.ribbons ) {
+		this.ribbons[r].throttle( amount, time1, time2 );
+		// this.strobe( 500 );
+	}
 }
 
 RibbonModule.prototype.key = function( key ) {
 	if ( key == 'A' ) {
-		for ( var r in this.ribbons ) {
-			this.ribbons[r].throttle( 30, 200, 500 );
-			this.strobe( 500 );
-		}
+		this.throttle( 30, 100, 100 );
 	}
 	if ( key == 'Q' ) {
-		for ( var r in this.ribbons )
-			this.ribbons[r].jumble( 500 );
+		this.jumble();
 		// this.strobe( 500 );
 	}
 	if ( key == 'T' ) {
@@ -86,15 +132,4 @@ RibbonModule.prototype.toggle = function( toggle ) {
 
 	this.lines.lineMaterial.color.setRGB( toggle?0:255, toggle?0:255, toggle?0:255 );
 	this.lines.node.position.z = toggle?10:0;
-}
-
-
-RibbonModule.prototype.update = function() {
-	// console.log( mouseX, mouseY );
-
-	// this.ribbon.update();
-	for ( var r in this.ribbons ) {
-		this.ribbons[r].update();
-	}
-	this.lines.update();
 }

@@ -21,7 +21,7 @@ TestModule.prototype.init = function() {
 
 	this.rects = new Array();
 	this.audioModes = [ 'vu', 'fft', 'spectral centroid', 'noisiness' ];
-	this.audioMode = this.audioModes[2];
+	this.audioMode = this.audioModes[3];
 
 	this.gui.add( this, 'audioMode', this.audioModes );
 
@@ -56,6 +56,9 @@ TestModule.prototype.update = function() {
 	if ( this.audio.vu.vu_levels.length == 0 )
 		return;
 
+	if ( !this.audio.useAudio )
+		return;
+
 
 	if ( this.audioMode == 'spectral centroid' || this.audioMode == 'noisiness' ) {
 		var rect = this.rects[this.curRect];
@@ -67,6 +70,7 @@ TestModule.prototype.update = function() {
 			if ( diff >= 1.0 ) {
 				var hue = ceiling - diff;
 				rect.material.color.setHSL( hue, 1.0, .5 );
+				console.log( 'audio.noiseHits: ' + audio.noiseHits );
 			}
 			else
 				rect.material.color.setRGB( 255, 255, 255 );
@@ -78,6 +82,9 @@ TestModule.prototype.update = function() {
 			if ( diff >= 1.0 ) {
 				var hue = 1.5 - diff;
 				rect.material.color.setHSL( hue, 1.0, .5 );
+				if ( audio.noiseHitsRed==1 && diff >= 1.5 ) {
+					rect.material.color.setHSL( .9, 1.0, .5 );
+				}
 			}
 			else
 				rect.material.color.setRGB( 255, 255, 255 );
