@@ -22,10 +22,10 @@ function Ribbon()
 	this.mesh.doubleSided	= true;
 
 	this.splinePoints = new Array();
-	this.splinePoints.push( new THREE.Vector3( 0, window.innerHeight*.75, 0 ) );
-	this.splinePoints.push( new THREE.Vector3( utils.random(-300,300), window.innerHeight * .25, 0 ) );
-	this.splinePoints.push( new THREE.Vector3( utils.random(-300,300), -window.innerHeight * .25, 0 ) );
-	this.splinePoints.push( new THREE.Vector3( 0, -window.innerHeight*.75, 0 ) );
+	this.splinePoints.push( new THREE.Vector3( 0, HEIGHT*.75, 0 ) );
+	this.splinePoints.push( new THREE.Vector3( utils.random(-300,300), HEIGHT * .25, 0 ) );
+	this.splinePoints.push( new THREE.Vector3( utils.random(-300,300), -HEIGHT * .25, 0 ) );
+	this.splinePoints.push( new THREE.Vector3( 0, -HEIGHT*.75, 0 ) );
 
 	this.spline = new THREE.Spline( this.splinePoints );
 	
@@ -33,11 +33,11 @@ function Ribbon()
 	this.node.add( this.mesh );
 
 	this.meshL = new THREE.Mesh(this.geom, this.material);
-	this.meshL.position.x = -window.innerWidth;
+	this.meshL.position.x = -WIDTH;
 	this.node.add( this.meshL );
 
 	this.meshR = new THREE.Mesh( this.geom, this.material );
-	this.meshR.position.x = window.innerWidth;
+	this.meshR.position.x = WIDTH;
 	this.node.add( this.meshR );
 
 	for ( var i=0; i<this.length+1; i++ ) {

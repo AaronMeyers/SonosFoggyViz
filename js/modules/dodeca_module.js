@@ -19,8 +19,8 @@ DodecaModule.prototype.off = function() {
 DodecaModule.prototype.init = function() {
 
 	var margin = 40;
-	this.slotWidth = ( window.innerWidth / 12 );
-	this.restingHeight = window.innerHeight - margin;
+	this.slotWidth = ( WIDTH / 12 );
+	this.restingHeight = HEIGHT - margin;
 	this.rects = new Array();
 	for ( var i=0; i<12; i++ ) {
 
@@ -56,8 +56,8 @@ DodecaModule.prototype.shift = function( spots ) {
 	for ( r in this.rects ) {
 		var rect = this.rects[r];
 		var callback = function() {
-			if ( this.node.position.x > window.innerWidth )
-				this.node.position.x -= window.innerWidth;
+			if ( this.node.position.x > WIDTH )
+				this.node.position.x -= WIDTH;
 		}
 		this.rects[r].animate( rect.node.position.x + spots * this.slotWidth, undefined, undefined, undefined, 200, callback );
 	}

@@ -25,10 +25,10 @@ Rect = function( x, y, width, height, filled ) {
 	this.node.add( this.plane );
 	// create planes for either side so that it wraps around
 	this.planeL = new THREE.Mesh( planeGeometry, planeMaterial );
-	this.planeL.position.x = -window.innerWidth;
+	this.planeL.position.x = -WIDTH;
 	this.node.add( this.planeL );
 	this.planeR = new THREE.Mesh( planeGeometry, planeMaterial );
-	this.planeR.position.x = window.innerWidth;
+	this.planeR.position.x = WIDTH;
 	this.node.add( this.planeR );
 
 	// create a wireframe plane
@@ -36,10 +36,10 @@ Rect = function( x, y, width, height, filled ) {
 	this.node.add( this.wireframe );
 	// create a wrapping wireframe plane
 	this.wireframeL = new THREE.Line( wirePoints, wireMaterial );
-	this.wireframeL.position.x = -window.innerWidth;
+	this.wireframeL.position.x = -WIDTH;
 	this.node.add( this.wireframeL );
 	this.wireframeR = new THREE.Line( wirePoints, wireMaterial );
-	this.wireframeR.position.x = window.innerWidth;
+	this.wireframeR.position.x = WIDTH;
 	this.node.add( this.wireframeR );
 
 	for ( var c in this.node.children ) {

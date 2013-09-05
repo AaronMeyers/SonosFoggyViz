@@ -28,7 +28,7 @@ RibbonModule.prototype.init = function() {
 	var numRibbons = 5;
 	for ( var i=0; i<numRibbons; i++ ) {
 		var ribbon = new Ribbon();
-		var width = window.innerWidth/numRibbons;
+		var width = WIDTH/numRibbons;
 		ribbon.node.position.x = i * width;// + width*.5;
 		
 		this.ribbons.push( ribbon );

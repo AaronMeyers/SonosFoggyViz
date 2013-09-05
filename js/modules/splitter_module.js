@@ -21,7 +21,7 @@ SplitterModule.prototype.init = function() {
 	this.filled = false;
 	this.rects = new Array();
 
-	var startRect = new Rect( window.innerWidth/2, 0, window.innerWidth - 10, 100, this.filled );
+	var startRect = new Rect( WIDTH/2, 0, WIDTH - 10, 100, this.filled );
 	this.node.add( startRect.node );
 	this.rects.push( startRect );
 
@@ -42,10 +42,10 @@ SplitterModule.prototype.update = function() {
 	for ( var n in this.node.children ) {
 		var node = this.node.children[n];
 		node.position.x -= this.scrollSpeed * this.scrollMultiplier;
-		if ( node.position.x > window.innerWidth )
-			node.position.x -= window.innerWidth;
+		if ( node.position.x > WIDTH )
+			node.position.x -= WIDTH;
 		else if ( node.position.x < 0 )
-			node.position.x += window.innerWidth;
+			node.position.x += WIDTH;
 	}
 
 	if ( audio.kick_det.isKick() ) {
@@ -122,7 +122,7 @@ SplitterModule.prototype.convergeAll = function() {
 			moduleNode.remove( tempNode );
 		}
 		var rect = this.rects.splice( 0, 1 );
-		rect[0].animate( window.innerWidth/2, 0, window.innerWidth - 10, 100, 500, (this.rects.length==0)?keeperCallback:undefined );
+		rect[0].animate( WIDTH/2, 0, WIDTH - 10, 100, 500, (this.rects.length==0)?keeperCallback:undefined );
 		if ( this.rects.length == 0 ) {
 			keeper = rect[0];
 		}

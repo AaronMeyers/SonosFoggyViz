@@ -20,7 +20,7 @@ SinewaveModule.prototype.init = function() {
 
 	// initialize a bunch of rects
 	var numRects = 64;
-	var totalWidth = window.innerWidth / numRects;
+	var totalWidth = WIDTH / numRects;
 	var margin = 10;
 	var rectWidth = totalWidth - margin;
 	this.rects = new Array();
@@ -80,10 +80,10 @@ SinewaveModule.prototype.update = function() {
 	for ( var n in this.node.children ) {
 		var node = this.node.children[n];
 		node.position.x -= this.scrollSpeed * this.scrollMultiplier;
-		if ( node.position.x > window.innerWidth )
-			node.position.x -= window.innerWidth;
+		if ( node.position.x > WIDTH )
+			node.position.x -= WIDTH;
 		else if ( node.position.x < 0 )
-			node.position.x += window.innerWidth;
+			node.position.x += WIDTH;
 	}
 }
 
