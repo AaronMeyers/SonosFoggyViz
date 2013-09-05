@@ -31,7 +31,7 @@ TestModule.prototype.init = function() {
 	var material = new THREE.MeshBasicMaterial( {color:0xffffff} );
 	for ( var i=0; i<count; i++ ) {
 		var mesh = new THREE.Mesh( geometry, material.clone() );
-		mesh.position.set( ( i / (count-1) ) * window.innerWidth, 0, 0 );
+		mesh.position.set( ( i / (count-1) ) * WIDTH, 0, 0 );
 		mesh.scale.x = 5;
 		mesh.scale.y = 200;
 
@@ -42,8 +42,8 @@ TestModule.prototype.init = function() {
 	this.avgRect = new THREE.Mesh( geometry, material.clone() );
 	this.avgRect.position.z = -1;
 	this.avgRect.material.color = new THREE.Color( "grey" );
-	this.avgRect.position.x = window.innerWidth/2;
-	this.avgRect.scale.x = window.innerWidth;
+	this.avgRect.position.x = WIDTH/2;
+	this.avgRect.scale.x = WIDTH;
 	this.node.add( this.avgRect );
 }
 

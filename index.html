@@ -77,6 +77,10 @@
 		<script src="./js/modules/ribbon_module.js"></script>
 
 		<script>
+
+			var WIDTH = 1920;
+			var HEIGHT = 1080;
+
 			var gui;
 
 			var audio = {
@@ -163,23 +167,30 @@
 				initAudio();
 
 				renderer = new THREE.WebGLRenderer();
+				// renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
 
 				scene = new THREE.Scene();
 
-				camera = new THREE.OrthographicCamera( 0, window.innerWidth, window.innerHeight / 2, window.innerHeight / - 2, - 500, 1000 );
+				camera = new THREE.OrthographicCamera( 0, WIDTH, HEIGHT / 2, HEIGHT / - 2, - 500, 1000 );
 				camera.position.z = 400;
 
 				var planeGeom = new THREE.PlaneGeometry( 1, 1, 1, 1 );
 				var planeMaterial = new THREE.MeshBasicMaterial({color:0x000000,transparent:true});
 				blackoutPlane = new THREE.Mesh( planeGeom, planeMaterial );
-				blackoutPlane.scale.x = window.innerWidth;
-				blackoutPlane.scale.y = window.innerHeight;
+				blackoutPlane.scale.x = WIDTH;
+				blackoutPlane.scale.y = HEIGHT;
 				blackoutPlane.position.x = window.innerWidth * .5;
 				blackoutPlane.position.z = 100;
 				blackoutPlane.visible = false;
 				scene.add( blackoutPlane );
+
+				// var testPlane = new THREE.Mesh( planeGeom, planeMaterial.clone() );
+				// testPlane.material.color.setRGB( 255,0,0 );
+				// testPlane.scale.set( WIDTH-100, HEIGHT-100, 1 );
+				// testPlane.position.set( WIDTH/2, 0, 0 );
+				// scene.add( testPlane );
 
 				initPostProcessing();
 
@@ -195,7 +206,18 @@
 
 			function onKeyDown( event ) {
 				var theChar = String.fromCharCode( event.which );
-				if ( parseInt( theChar ) ) {
+
+				if ( event.which == 192 ) {
+					if ( $('#debug').css('display') == 'none' ) {
+						$('#debug').show();
+						$(gui.domElement).show();
+					}
+					else {
+						$('#debug').hide();
+						$(gui.domElement).hide();
+					}
+				}
+				else if ( parseInt( theChar ) ) {
 					var num = parseInt( theChar) - 1;
 					if ( num < moduleNames.length )
 						switchModule( moduleNames[num] );
@@ -515,18 +537,17 @@
 			}
 
 			function onWindowResize() {
-				camera.left = 0;
-				camera.right = window.innerWidth;
-				camera.top = window.innerHeight / 2;
-				camera.bottom = window.innerHeight / - 2;
-
-				camera.updateProjectionMatrix();
+				// camera.left = 0;
+				// camera.right = window.innerWidth;
+				// camera.top = window.innerHeight / 2;
+				// camera.bottom = window.innerHeight / - 2;
+				// camera.updateProjectionMatrix();
 
 				renderer.setSize( window.innerWidth, window.innerHeight );
 
-				blackoutPlane.scale.x = window.innerWidth;
-				blackoutPlane.scale.y = window.innerHeight;
-				blackoutPlane.position.x = window.innerWidth * .5;
+				// blackoutPlane.scale.x = window.innerWidth;
+				// blackoutPlane.scale.y = window.innerHeight;
+				// blackoutPlane.position.x = window.innerWidth * .5;
 
 				edgeEffect.uniforms[ 'aspect' ].value.x = window.innerWidth;
 				edgeEffect.uniforms[ 'aspect' ].value.y = window.innerHeight;
