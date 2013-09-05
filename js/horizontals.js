@@ -1,7 +1,8 @@
 function Horizontals( num ) {
 	this.lines = new Array();
 	this.node = new THREE.Object3D();
-	this.speed = .5;
+	this.baseSpeed = .5;
+	this.speed = this.baseSpeed;
 	this.lineWidth = 10;
 
 
@@ -18,6 +19,27 @@ function Horizontals( num ) {
 		this.node.add( line );
 		this.lines.push( line );
 	}
+}
+
+Horizontals.prototype.throttle = function(amount, time1, time2) {
+	var tween = new TWEEN.Tween(this)
+		.to({speed:amount}, time1 )
+		.start();
+
+	var tweenBack = new TWEEN.Tween(this)
+		.to({speed:this.baseSpeed}, time2 )
+		.easing(TWEEN.Easing.Quadratic.InOut)
+
+	tween.chain(tweenBack);
+}
+
+Horizontals.prototype.setWidth = function( width ) {
+	
+	this.lineWidth = width;
+	this.lineMaterial.linewidth = this.lineWidth;
+	// for ( l in this.lines ) {
+	// 	this.lines[l].material.linewidth = width;
+	// }
 }
 
 Horizontals.prototype.update = function() {

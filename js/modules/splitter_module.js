@@ -51,8 +51,8 @@ SplitterModule.prototype.update = function() {
 	if ( audio.kick_det.isKick() ) {
 		this.flashFill();
 	}
-	if ( audio.beat )
-		this.splitRandomRect();
+	// if ( audio.beat )
+	// 	this.splitRandomRect();
 
 }
 

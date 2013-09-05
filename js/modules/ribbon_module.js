@@ -52,21 +52,24 @@ RibbonModule.prototype.update = function() {
 
 		var time = new Date().getTime();
 		var sinceLastHit = time - this.lastHit;
-		if ( this.audio.noiseHitsRed == 1 && this.audio.noisiness / this.audio.noiseAvg >= 1.5 && sinceLastHit > this.hitThreshold ) {
-			console.log( 'since last hit: ' + sinceLastHit );
-			this.hitCount++;
-			this.lastHit = time;
+		if ( sinceLastHit > this.hitThreshold ) {
+			if ( this.audio.noiseHitsRed == 1 && this.audio.noisiness / this.audio.noiseAvg >= 1.5 ) {
+				// console.log( 'since last hit: ' + sinceLastHit );
+				this.hitCount++;
+				this.lastHit = time;
 
-			var option = this.hitCount % 3;
-			if ( option==0 )
-				this.jumble( 200 );
-			if ( option==1 )
-				this.strobe( 200 );
-			if ( option==2 )
-				this.throttle( 30, 200, 500 );
+				var option = this.hitCount % 4;
+				if ( option==0 )
+					this.jumble( 200 );
+				if ( option==1 )
+					this.strobe( 200 );
+				if ( option==2 )
+					this.throttle( 30, 200, 500 );
+				if ( option==3 )
+					this.lines.throttle( 20, 200, 500 );
+			}
 		}
-			// console.log( 'do something: ' + this.audio.noisiness );
-
+		this.lines.setWidth( audio.noisiness * .25 );
 	}
 
 	// this.ribbon.update();
