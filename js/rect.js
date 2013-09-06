@@ -8,7 +8,7 @@ squareShape.lineTo( .5, .5 );
 squareShape.lineTo( .5, -.5 );
 squareShape.lineTo( -.5, -.5 );
 var wirePoints = squareShape.createPointsGeometry();
-var wireMaterial = new THREE.LineBasicMaterial( {color:0xffffff, linewidth:2} );
+var wireMaterial = new THREE.LineBasicMaterial( {color:0xffffff, linewidth:10} );
 
 Rect = function( x, y, width, height, filled ) {
 
@@ -95,6 +95,8 @@ Rect.prototype.setHeight = function( height ) {
 }
 
 Rect.prototype.splitNum = function( num, margin ) {
+
+	num = Math.floor( num );
 	
 	// split the rectangle into an arbitrary number of new rectangles
 	var destWidth = ( this.getWidth() - ( margin * (num-1) ) ) / num;
