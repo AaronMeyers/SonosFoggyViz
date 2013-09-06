@@ -21,11 +21,25 @@ function Ribbon()
 	this.mesh.dynamic		= true;
 	this.mesh.doubleSided	= true;
 
+	this.numPoints			= 5;
+
 	this.splinePoints = new Array();
-	this.splinePoints.push( new THREE.Vector3( 0, HEIGHT*.75, 0 ) );
-	this.splinePoints.push( new THREE.Vector3( utils.random(-300,300), HEIGHT * .25, 0 ) );
-	this.splinePoints.push( new THREE.Vector3( utils.random(-300,300), -HEIGHT * .25, 0 ) );
-	this.splinePoints.push( new THREE.Vector3( 0, -HEIGHT*.75, 0 ) );
+	
+	for ( var i=0; i<this.numPoints; i++ ) {
+		var norm = i/(this.numPoints-1);
+		this.splinePoints.push(
+			new THREE.Vector3(
+				utils.random(-300,300),
+				utils.map( norm, 0, 1, HEIGHT*.6, -HEIGHT*.6 ),
+				0
+				)
+			);
+	}
+
+	// this.splinePoints.push( new THREE.Vector3( 0, HEIGHT*.75, 0 ) );
+	// this.splinePoints.push( new THREE.Vector3( utils.random(-300,300), HEIGHT * .25, 0 ) );
+	// this.splinePoints.push( new THREE.Vector3( utils.random(-300,300), -HEIGHT * .25, 0 ) );
+	// this.splinePoints.push( new THREE.Vector3( 0, -HEIGHT*.75, 0 ) );
 
 	this.spline = new THREE.Spline( this.splinePoints );
 	
@@ -46,7 +60,8 @@ function Ribbon()
 	}
 
 	this.jumble = function( time ) {
-		for ( var i=1; i<this.splinePoints.length-1; i++ ) {
+		// for ( var i=1; i<this.splinePoints.length-1; i++ ) {
+		for ( var i=0; i<this.splinePoints.length; i++ ) {
 			var tween = new TWEEN.Tween(this.splinePoints[i])
 				.to({x:utils.random(-300,300)}, time)
 				.easing( TWEEN.Easing.Quadratic.InOut )

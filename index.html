@@ -109,6 +109,7 @@
 
 			var maxNoises = 10;
 			var maxSpectrals = 10;
+			var noiseScale = 1;
 
 			var vu_avgs = new Array();
 
@@ -279,6 +280,7 @@
 				// gui.add( this, 'scVelThresh', 50, 150 ).step( 1 );
 				// gui.add( this, 'kickThreshold', 100, 1000 );
 				gui.add( this, 'maxNoises', 5, 30 );
+				gui.add( this, 'noiseScale', 0, 10 ).step( .25 );
 				gui.add( this, 'maxSpectrals', 5, 30 );
 
 				gui.add( this, 'module', moduleNames ).onChange( function( value ) {
@@ -521,7 +523,7 @@
 				}
 				noisiness = Math.sqrt(noisiness / n);
 				noisiness /= n;
-				noisiness *= 10000;
+				noisiness *= 10000 * noiseScale;
 				audio.noisiness = noisiness;
 				$('#noisiness').text( 'Noisiness: ' + audio.noisiness.toFixed(3) );
 				// ANALYZE NOISE OVER TIME

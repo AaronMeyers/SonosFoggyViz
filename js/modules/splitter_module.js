@@ -20,7 +20,7 @@ SplitterModule.prototype.init = function() {
 
 	this.filled = false;
 	this.rects = new Array();
-	this.margin = 20;
+	this.margin = 40;
 	this.rectHeight = 100;
 
 	var startRect = new Rect( WIDTH/2, 0, WIDTH - this.margin, this.rectHeight, this.filled );
@@ -36,6 +36,7 @@ SplitterModule.prototype.init = function() {
 	this.lastHit = new Date().getTime();
 	this.hitThreshold = 500;
 	this.gui.add( this, 'hitThreshold', 100, 1000 );
+	this.minWidth = this.margin * 2;
 }
 
 SplitterModule.prototype.update = function() {
@@ -49,7 +50,12 @@ SplitterModule.prototype.update = function() {
 				this.hitCount++;
 				this.lastHit = time;
 
-				var option = this.hitCount % 6;
+				if ( this.hitCount==20 ) {
+					this.convergeAll();
+					this.hitCount = 0;
+				}
+
+				var option = this.hitCount % 5;
 				if ( option==0 )
 					this.splitAllRects( utils.random( 2, 4 ) );
 				if ( option==1 )
@@ -60,8 +66,6 @@ SplitterModule.prototype.update = function() {
 					this.collapseAllRects();
 				if ( option==4 )
 					this.extendAllRects();
-				if ( option==5 )
-					this.convergeAll();
 
 				// if ( option==0 )
 				// 	this.jumble( 200 );
@@ -207,7 +211,7 @@ SplitterModule.prototype.splitAllRects = function( num ) {
 	var rects = this.rects.slice(0);
 	for ( var r in rects ) {
 		var rect = rects[r];
-		if ( TWEEN.getAll().indexOf( rect.tween ) > -1 || rect.getWidth() < 20 )
+		if ( TWEEN.getAll().indexOf( rect.tween ) > -1 || rect.getWidth() < this.minWidth )
 			continue;
 
 		this.splitRect( rect, num );
