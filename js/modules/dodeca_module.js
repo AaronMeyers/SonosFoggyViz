@@ -38,11 +38,9 @@ DodecaModule.prototype.init = function() {
 DodecaModule.prototype.update = function() {
 
 	if ( this.audio.useAudio ) {
-
 		if ( audio.kick_det.isKick() ) {
 			this.flashFill();
 		}
-
 		
 		var time = new Date().getTime();
 		var sinceLastHit = time - this.lastHit;

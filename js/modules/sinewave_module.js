@@ -19,9 +19,9 @@ SinewaveModule.prototype.off = function() {
 SinewaveModule.prototype.init = function() {
 
 	// initialize a bunch of rects
-	var numRects = 64;
+	var numRects = 32;
 	var totalWidth = WIDTH / numRects;
-	var margin = 10;
+	var margin = 20;
 	var rectWidth = totalWidth - margin;
 	this.rects = new Array();
 	for ( var i=0; i<numRects; i++ ) {
@@ -45,23 +45,36 @@ SinewaveModule.prototype.init = function() {
 	this.scrollMultiplier = 1;
 	this.gui.add( this, 'scrollSpeed', -50, 50 );
 
-	this.vu_levels = new Array();
-	for ( var i=0;i<128; i++ ) {
-		// console.log( 'blah' );
-		this.vu_levels.push(.1);
-	}
+	// audio
+	this.lastHit = new Date().getTime();
+	this.hitThreshold = 1000;
+	gui.add( this, 'hitThreshold', 100, 1000 );
 }
 
 SinewaveModule.prototype.update = function() {
 
-	if ( this.audio.vu.vu_levels.length > 0 ) {
-		for ( l in this.vu_levels ) {
+	if ( this.audio.useAudio ) {
+		if ( audio.kick_det.isKick() ) {
+			this.flashFill();
+		}
+		
+		var time = new Date().getTime();
+		var sinceLastHit = time - this.lastHit;
+		if ( sinceLastHit > this.hitThreshold ) {
+			if ( this.audio.noiseHitsRed == 1 && this.audio.noisiness / this.audio.noiseAvg >= 1.5 ) {
+				console.log( sinceLastHit + '/' + this.hitThreshold );
+				this.lastHit = time;
 
-			this.vu_levels[l] = utils.lerp( this.vu_levels[l], this.audio.vu.vu_levels[l], .5 );
-			// if ( l==32 ) console.log( this.vu_levels[l] );
+				var option = Math.floor( utils.random( 2 ) );
+				if ( option == 0 ) {
+					this.turboSine( 'xRotation' );
+				}
+				else if ( option == 1 ) {
+					this.turboSine( 'zRotation' );
+				}
+			}
 		}
 	}
-
 
 	this.sineSeed += this.sineSpeed * this.sineSpeedMultiplier;
 
@@ -85,6 +98,28 @@ SinewaveModule.prototype.update = function() {
 		else if ( node.position.x < 0 )
 			node.position.x += WIDTH;
 	}
+}
+
+
+SinewaveModule.prototype.setFill = function( fill ) {
+	this.filled = fill;
+	for ( var r in this.rects ) {
+		this.rects[r].setFill( this.filled );
+	}
+}
+SinewaveModule.prototype.flashFill = function() {
+	this.setFill( true );
+	var tween = new TWEEN.Tween({module:this, material:planeMaterial, opacity:planeMaterial.opacity})
+		.to({opacity:0}, 250 )
+		.onUpdate( function() {
+			this.material.opacity = this.opacity;
+		})
+		.onComplete( function() {
+			// after we've faded out the fill, turn the fill off and set the material back to being fully opaque
+			this.module.setFill( false );
+			this.material.opacity = 1.0;
+		})
+		.start();
 }
 
 SinewaveModule.prototype.turboSine = function( property ) {
