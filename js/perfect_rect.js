@@ -90,6 +90,6 @@ PRect.prototype.setHeight = function( height ) {
 }
 
 PRect.prototype.update = function() {
-	// if ( this.geoNeedsUpdate )
-	// 	this.updateGeometry();
+	if ( this.geoNeedsUpdate )
+		this.updateGeometry();
 }

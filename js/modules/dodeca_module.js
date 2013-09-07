@@ -32,7 +32,7 @@ DodecaModule.prototype.init = function() {
 	this.squished = false;
 	this.lastHit = new Date().getTime();
 	this.hitThreshold = 500;
-	gui.add( this, 'hitThreshold', 100, 1000 );
+	this.gui.add( this, 'hitThreshold', 100, 1000 );
 }
 
 DodecaModule.prototype.update = function() {
@@ -64,8 +64,8 @@ DodecaModule.prototype.update = function() {
 		}
 	}
 
-	// for ( var r in this.rects )
-	// 	this.rects[r].update();
+	for ( var r in this.rects )
+		this.rects[r].update();
 
 }
 

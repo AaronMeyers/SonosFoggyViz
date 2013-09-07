@@ -48,7 +48,7 @@ SinewaveModule.prototype.init = function() {
 	// audio
 	this.lastHit = new Date().getTime();
 	this.hitThreshold = 1000;
-	gui.add( this, 'hitThreshold', 100, 1000 );
+	this.gui.add( this, 'hitThreshold', 100, 1000 );
 }
 
 SinewaveModule.prototype.update = function() {

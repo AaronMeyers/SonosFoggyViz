@@ -10,7 +10,9 @@ squareShape.lineTo( -.5, -.5 );
 var wirePoints = squareShape.createPointsGeometry();
 var wireMaterial = new THREE.LineBasicMaterial( {color:0xffffff, linewidth:10} );
 
-Rect = function( x, y, width, height, filled ) {
+Rect = function( x, y, width, height, filled, thickness ) {
+
+	if ( thickness == undefined ) thickness = 10;
 
 	this.node = new THREE.Object3D();
 	// this.node.scale.x = width;
@@ -19,6 +21,9 @@ Rect = function( x, y, width, height, filled ) {
 	this.node.position.y = y;
 	this.rotationX = 0;
 	this.rotationZ = 0;
+
+	this.velX = 0;
+	this.velY = 0;
 
 	// create a filled plane
 	this.plane = new THREE.Mesh( planeGeometry, planeMaterial );
@@ -46,7 +51,7 @@ Rect = function( x, y, width, height, filled ) {
 	// this.node.add( this.wireframeR );
 
 	this.prects = new Array();
-	this.prect = new PRect( 0, 0, width, height, 10 );
+	this.prect = new PRect( 0, 0, width, height, thickness );
 	this.prects.push( this.prect );
 	this.node.add( this.prect.mesh );
 	var prectL = this.prect.mesh.clone();
@@ -105,6 +110,11 @@ Rect.prototype.setRotationZ = function( rotation ) {
 Rect.prototype.getWidth = function() {
 	return this.width;
 	// return this.plane.scale.x;
+}
+
+Rect.prototype.setThickness = function( thickness ) {
+	for ( var pr in this.prects )
+		this.prects[pr].setThickness( thickness );
 }
 
 Rect.prototype.setWidth = function( width ) {
