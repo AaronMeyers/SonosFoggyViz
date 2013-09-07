@@ -54,32 +54,33 @@ SplitterModule.prototype.update = function() {
 				this.hitCount++;
 				this.lastHit = time;
 
-				if ( this.hitCount==20 ) {
+				if ( this.hitCount>16 && this.extended ) {
 					this.convergeAll();
 					this.hitCount = 0;
-				}
+				} else {
 
-				// var option = this.hitCount % 4;
-				var option = Math.floor( utils.random( 3 ) );
-				if ( option==0 ) {
-					// console.log( '0 split' );
-					var num = this.splitAllRects( utils.random( 2, 4 ) );
-					if ( num==0 ) { // if no rects were split, either throttle if extended or extend
+					// var option = this.hitCount % 4;
+					var option = Math.floor( utils.random( 3 ) );
+					if ( option==0 ) {
+						// console.log( '0 split' );
+						var num = this.splitAllRects( utils.random( 2, 4 ) );
+						if ( num==0 ) { // if no rects were split, either throttle if extended or extend
+							if ( this.extended )
+								this.throttle();
+							else
+								this.extendAllRects();
+						}
+					}
+					if ( option==1 ) {
+						// console.log( '1 extend' );	
 						if ( this.extended )
-							this.throttle();
+							this.collapseAllRects();
 						else
 							this.extendAllRects();
 					}
-				}
-				if ( option==1 ) {
-					// console.log( '1 extend' );
-					if ( this.extended )
-						this.collapseAllRects();
-					else
-						this.extendAllRects();
-				}
-				if ( option==2 ) {
-					this.throttle();
+					if ( option==2 ) {
+						this.throttle();
+					}
 				}
 			}
 		}
