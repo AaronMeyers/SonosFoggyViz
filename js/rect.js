@@ -22,30 +22,54 @@ Rect = function( x, y, width, height, filled ) {
 
 	// create a filled plane
 	this.plane = new THREE.Mesh( planeGeometry, planeMaterial );
+	this.plane.name = "plane";
 	this.node.add( this.plane );
 	// create planes for either side so that it wraps around
 	this.planeL = new THREE.Mesh( planeGeometry, planeMaterial );
 	this.planeL.position.x = -WIDTH;
+	this.planeL.name = "planeL";
 	this.node.add( this.planeL );
 	this.planeR = new THREE.Mesh( planeGeometry, planeMaterial );
 	this.planeR.position.x = WIDTH;
+	this.planeR.name = "planeR";
 	this.node.add( this.planeR );
 
-	// create a wireframe plane
-	this.wireframe = new THREE.Line( wirePoints, wireMaterial );
-	this.node.add( this.wireframe );
-	// create a wrapping wireframe plane
-	this.wireframeL = new THREE.Line( wirePoints, wireMaterial );
-	this.wireframeL.position.x = -WIDTH;
-	this.node.add( this.wireframeL );
-	this.wireframeR = new THREE.Line( wirePoints, wireMaterial );
-	this.wireframeR.position.x = WIDTH;
-	this.node.add( this.wireframeR );
+	// // create a wireframe plane
+	// this.wireframe = new THREE.Line( wirePoints, wireMaterial );
+	// this.node.add( this.wireframe );
+	// // create a wrapping wireframe plane
+	// this.wireframeL = new THREE.Line( wirePoints, wireMaterial );
+	// this.wireframeL.position.x = -WIDTH;
+	// this.node.add( this.wireframeL );
+	// this.wireframeR = new THREE.Line( wirePoints, wireMaterial );
+	// this.wireframeR.position.x = WIDTH;
+	// this.node.add( this.wireframeR );
+
+	this.prects = new Array();
+	this.prect = new PRect( 0, 0, width, height, 10 );
+	this.prects.push( this.prect );
+	this.node.add( this.prect.mesh );
+	var prectL = this.prect.mesh.clone();
+	prectL.position.x = -WIDTH;
+	this.node.add( prectL );
+	var prectR = this.prect.mesh.clone();
+	prectR.position.x = WIDTH;
+	this.node.add( prectR );
+
+	// this.prects.push( prectL );
+	// this.prects.push( prectR );
+
+	this.width = width;
+	this.height = height;
 
 	for ( var c in this.node.children ) {
 		var child = this.node.children[c];
-		child.scale.x = width;
-		child.scale.y = height;
+		if ( child.name == "prect" ) {
+
+		} else {
+			child.scale.x = width;
+			child.scale.y = height;
+		}
 	}
 
 	// this.isFilled = filled;
@@ -53,7 +77,9 @@ Rect = function( x, y, width, height, filled ) {
 }
 
 Rect.prototype.update = function() {
-
+	// console.log( "update: " + this.node.uuid );
+	for ( pr in this.prects )
+		this.prects[pr].update();
 }
 
 Rect.prototype.getRotationX = function() {
@@ -77,21 +103,40 @@ Rect.prototype.setRotationZ = function( rotation ) {
 }
 
 Rect.prototype.getWidth = function() {
-	return this.plane.scale.x;
+	return this.width;
+	// return this.plane.scale.x;
 }
 
 Rect.prototype.setWidth = function( width ) {
-	for ( var c in this.node.children )
-		this.node.children[c].scale.x = width;
+	for ( var c in this.node.children ) {
+		if ( this.node.children[c].name == "prect" ) {
+
+		} else {
+			this.node.children[c].scale.x = width;
+		}
+	}
+	for ( pr in this.prects ) {
+		this.prects[pr].setWidth( width );
+	}
+	this.width = width;
 }
 
 Rect.prototype.getHeight = function() {
-	return this.plane.scale.y;
+	// return this.plane.scale.y;
+	return this.height;
 }
 
 Rect.prototype.setHeight = function( height ) {
-	for ( var c in this.node.children )
-		this.node.children[c].scale.y = height;
+	for ( var c in this.node.children ) {
+		if ( this.node.children[c].name == "prect" ) {
+		} else {
+			this.node.children[c].scale.y = height;
+		}
+	}
+	for ( pr in this.prects ) {
+		this.prects[pr].setHeight( height );
+	}
+	this.height = height;
 }
 
 Rect.prototype.getTop = function() {
@@ -103,7 +148,6 @@ Rect.prototype.getBottom = function() {
 }
 
 Rect.prototype.splitNum = function( num, margin ) {
-
 	num = Math.floor( num );
 	
 	// split the rectangle into an arbitrary number of new rectangles
@@ -131,7 +175,7 @@ Rect.prototype.splitNum = function( num, margin ) {
 
 		var xpos = (leftEdge + destWidth/2) - tempNode.position.x + (destWidth+margin) * i;
 		var rect = new Rect( 0, 0, this.getWidth(), this.getHeight() );
-		rect.setFill( this.isFilled ).animate( xpos, 0, destWidth, this.getHeight(), speed, callback );
+		rect.setFill( this.isFilled ).animate( xpos, undefined, destWidth, undefined, speed, callback );
 		tempNode.add( rect.node );
 		returnRects.push( rect );
 	}
@@ -176,8 +220,8 @@ Rect.prototype.split = function( margin ) {
 	}
 
 	var speed = 200;
-	rect1.setFill( this.isFilled ).animate( leftX, 0, destWidth, this.getHeight(), speed, callback );
-	rect2.setFill( this.isFilled ).animate( rightX, 0, destWidth, this.getHeight(), speed, callback );
+	rect1.setFill( this.isFilled ).animate( leftX, undefined, destWidth, undefined, speed, callback );
+	rect2.setFill( this.isFilled ).animate( rightX, undefined, destWidth, undefined, speed, callback );
 
 	return [ rect1, rect2 ];
 }
@@ -188,7 +232,7 @@ Rect.prototype.extend = function( height, direction, time, delay ) {
 	// extend the rectangle in one direction, maintaining the edge in the opposite direction
 	var bottomEdge = this.node.position.y - ( this.getHeight()/2 * direction );
 	var y = bottomEdge + ( height/2 * direction );
-	this.animate( undefined, y, this.getWidth(), height, time, null, delay );
+	this.animate( undefined, y, undefined, height, time, null, delay );
 }
 
 Rect.prototype.collapseCenter = function( height ) {
@@ -203,11 +247,13 @@ Rect.prototype.animate = function( x, y, width, height, time, callback, delay ) 
 	var tweenObj = {
 		rect: this,
 		node: this.node,
+		prects: this.prects,
 		x: x==undefined?undefined:this.node.position.x,
 		y: y==undefined?undefined:this.node.position.y,
 		width: width==undefined?undefined:this.getWidth(),
 		height: height==undefined?undefined:this.getHeight()
 	};
+
 
 	if ( callback == undefined )
 		callback = function() {}
@@ -222,12 +268,29 @@ Rect.prototype.animate = function( x, y, width, height, time, callback, delay ) 
 				this.node.position.x = this.x;
 			if ( this.y != undefined )
 				this.node.position.y = this.y;
+			if ( this.width != undefined )
+				this.rect.width = this.width;
+			if ( this.height != undefined )
+				this.rect.height = this.height;
 			for ( var c in this.node.children ) {
 				var child = this.node.children[c];
+				if ( child.name == "prect" ) {
+
+				} else {
+					if ( this.width != undefined )
+						child.scale.x = this.width;
+					if ( this.height != undefined )
+						child.scale.y = this.height;
+				}
+			}
+
+			for ( pr in this.prects ) {
 				if ( this.width != undefined )
-					child.scale.x = this.width;
-				if ( this.height != undefined )
-					child.scale.y = this.height;
+					this.prects[pr].setWidth( this.width );
+				if ( this.height != undefined ) 
+					this.prects[pr].setHeight( this.height );
+				if ( this.prects[pr].geoNeedsUpdate )
+					this.prects[pr].updateGeometry();
 			}
 		})
 		.onComplete(callback)

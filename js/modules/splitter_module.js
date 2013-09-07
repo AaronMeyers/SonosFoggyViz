@@ -44,7 +44,7 @@ SplitterModule.prototype.update = function() {
 
 	if ( this.audio.useAudio ) {
 
-		this.scrollSpeed = utils.sign( this.scrollSpeed ) * this.audio.noisiness * .1;
+		// this.scrollSpeed = utils.sign( this.scrollSpeed ) * this.audio.noisiness * .1;
 
 
 		var time = new Date().getTime();
@@ -84,7 +84,7 @@ SplitterModule.prototype.update = function() {
 				}
 			}
 		}
-		
+
 		if ( audio.kick_det.isKick() ) {
 			this.flashFill();
 		}
@@ -102,10 +102,14 @@ SplitterModule.prototype.update = function() {
 	for ( var n in this.node.children ) {
 		var node = this.node.children[n];
 		node.position.x -= this.scrollSpeed * this.scrollMultiplier;
-		if ( node.position.x > WIDTH )
+		if ( node.position.x > WIDTH ) {
 			node.position.x -= WIDTH;
-		else if ( node.position.x < 0 )
+			// console.log( 'moving node back by width' );
+		}
+		else if ( node.position.x < 0 ){
 			node.position.x += WIDTH;
+			// console.log( 'moving node fwd by width' );
+		}
 	}
 
 	// if ( audio.beat )
@@ -147,10 +151,12 @@ SplitterModule.prototype.convergeAll = function() {
 	}
 	// iterate through children and attach them to the new obj
 	while ( this.node.children.length > 0 ) {
+
 		var child = this.node.children[0];
 		if ( child.name == "tempSplitNode" ) {
 			// splitting rects need to be unattached
 			while ( child.children.length > 0 ) {
+				console.log( 'this is happening' );
 				var rect = child.children[0];
 				rect.position.x += child.position.x;
 				rect.position.y += child.position.y;
@@ -166,20 +172,37 @@ SplitterModule.prototype.convergeAll = function() {
 	}
 
 	this.node.add( obj );
+	// obj.node.position = WIDTH;
+	console.log( obj.position );
 
 	// now we can animate them all back to center
 	var keeper = undefined
 	while ( this.rects.length > 0 ) {
-
 		var keeperCallback = function() {
 			// we'll only add one rect back to the main node
 			var moduleNode = this.node.parent.parent;
 			var tempNode = this.node.parent;
-			moduleNode.add( this.node );
+			// for some reason, this keepr rect comes back funky... cannot figure it out so using a dirty hack of a solution
+			this.node.position.x += tempNode.position.x
+			// instead of adding it back to the top module, we're just getting rid of it
+			// moduleNode.add( this.node );
+
+			var newrect = new Rect( this.node.position.x, 0, this.rect.getWidth(), this.rect.getHeight() );
+			moduleNode.add( newrect.node );
+			// what is really dirt is that we have manipulated a global variable reference to the insance of the splitter module because it isn't in scope inside this callback
+			// oh well.
+			modules.splitterModule.rects.splice(0,1);
+			modules.splitterModule.rects.push(newrect);
+
 			moduleNode.remove( tempNode );
 		}
 		var rect = this.rects.splice( 0, 1 );
 		rect[0].animate( WIDTH/2, 0, WIDTH - this.margin, this.rectHeight, 500, (this.rects.length==0)?keeperCallback:undefined );
+		// rect[0].animate( WIDTH/2, undefined, undefined, undefined, 5000 );
+		// console.log( this.rects.length + " -- " + typeof rect[0] );
+		// rect[0].animate( WIDTH/2, 0, undefined, 100, 500 );
+		// rect[0].animate( undefined, undefined, undefined, 100 );
+
 		if ( this.rects.length == 0 ) {
 			keeper = rect[0];
 		}
@@ -272,6 +295,16 @@ SplitterModule.prototype.key = function( key ) {
 
 	// things to add
 
+	if ( key == 'P' ) {
+		var rect = this.rects[0];
+		console.log(  "rect x: " + rect.node.position.x );
+		for ( c in rect.node.children ) {
+			var child = rect.node.children[c];
+			console.log( 'child x: ' + child.position.x );
+		}
+
+	}
+
 	if ( key == 'E' ) {
 		this.extendAllRects();
 	}
@@ -299,10 +332,6 @@ SplitterModule.prototype.key = function( key ) {
 	// 	// toggle fill mode on rects
 	// 	this.setFill( !this.filled );
 	// }
-
-	if ( key == 'S' ) {
-		this.splitRandomRect();
-	}
 
 	if ( key == 'D' ) {
 		this.splitAllRects();

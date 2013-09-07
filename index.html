@@ -205,8 +205,6 @@
 
 				initModules();
 
-
-
 				window.addEventListener( 'resize', onWindowResize, false );
 				window.addEventListener( 'keydown', onKeyDown, false );
 			}
@@ -246,9 +244,9 @@
 				var nextModule;
 				do {
 					nextModule = utils.random( moduleNames );
-				} while ( nextModule == module );
+				} while ( nextModule == module || nextModule == "testModule" );
 
-				console.log( 'switching to ' + nextModule );
+				// console.log( 'switching to ' + nextModule );
 				switchModule( nextModule );
 
 			}
@@ -354,7 +352,7 @@
 				modules.ribbonModule = new RibbonModule( audio, scene, gui.addFolder( 'Ribbon Module' ) );
 				// modules.emptyModule = new EmptyModule( audio, scene, gui.addFolder( 'Empty Module' ) );
 
-				module = moduleNames[0];
+				module = moduleNames[2];
 				activeModule = modules[module];
 				activeModule.on();
 				activeModule.gui.open();

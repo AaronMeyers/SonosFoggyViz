@@ -24,6 +24,7 @@ PRect = function( x, y, width, height, thickness ) {
 	this.mesh = new THREE.Mesh( leftGeom, new THREE.MeshBasicMaterial({color:0xFFFFFF}) );
 	this.mesh.geometry.dynamic = true;
 	this.mesh.position.set( x, y, 0 );
+	this.mesh.name = "prect";
 
 }
 
@@ -74,20 +75,21 @@ PRect.prototype.setThickness = function( thickness ) {
 }
 
 PRect.prototype.setWidth = function( width ) {
-	if ( this.width = width )
+	if ( this.width == width )
 		return;
+
 	this.width = width;
 	this.geoNeedsUpdate = true;
 }
 
 PRect.prototype.setHeight = function( height ) {
-	if ( this.height = height )
+	if ( this.height == height )
 		return;
 	this.height = height;
 	this.geoNeedsUpdate = true;
 }
 
 PRect.prototype.update = function() {
-	if ( this.geoNeedsUpdate )
-		this.updateGeometry();
+	// if ( this.geoNeedsUpdate )
+	// 	this.updateGeometry();
 }

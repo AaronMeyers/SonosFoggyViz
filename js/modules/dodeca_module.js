@@ -64,6 +64,9 @@ DodecaModule.prototype.update = function() {
 		}
 	}
 
+	// for ( var r in this.rects )
+	// 	this.rects[r].update();
+
 }
 
 DodecaModule.prototype.squishUp = function() {

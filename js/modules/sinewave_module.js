@@ -125,7 +125,11 @@ SinewaveModule.prototype.flashFill = function() {
 SinewaveModule.prototype.turboSine = function( property ) {
 
 	var tweenObj = {};
-	tweenObj[property] = utils.random(Math.PI/2,Math.PI) * utils.randomSign();
+	if ( property == 'xRotation' )
+		tweenObj[property] = Math.PI*.5 * utils.randomSign();
+	else
+		tweenObj[property] = utils.random(Math.PI*.5,Math.PI) * utils.randomSign();
+		
 
 	var tweenBackObj = {};
 	tweenBackObj[property] = 0;
