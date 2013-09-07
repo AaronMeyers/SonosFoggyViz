@@ -68,6 +68,7 @@
 		<script src="./js/shaders/PolarShader.js"></script>
 		<script src="./js/ribbon.js"></script>
 		<script src="./js/horizontals.js"></script>
+		<script src="./js/perfect_rect.js"></script>
 		<!-- MODULES -->
 		<script src="./js/modules/test_module.js"></script>
 		<script src="./js/modules/splitter_module.js"></script>
@@ -163,6 +164,7 @@
 			var autoSwitch = false;
 			var switchInterval = 15;
 			var lastSwitch = new Date().getTime();
+			var testRect;
 
 			init();
 			animate();
@@ -191,11 +193,11 @@
 				blackoutPlane.visible = false;
 				scene.add( blackoutPlane );
 
-				// var testPlane = new THREE.Mesh( planeGeom, planeMaterial.clone() );
-				// testPlane.material.color.setRGB( 255,0,0 );
-				// testPlane.scale.set( WIDTH-100, HEIGHT-100, 1 );
-				// testPlane.position.set( WIDTH/2, 0, 0 );
-				// scene.add( testPlane );
+				// testRect = new PRect( 300, 200, 400, 200, 20 );
+				// scene.add( testRect.mesh );
+				// testRect.setThickness( 3 );
+				// testRect.setWidth( 1000 );
+				// testRect.update();
 
 				initPostProcessing();
 
