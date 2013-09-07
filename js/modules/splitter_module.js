@@ -29,7 +29,7 @@ SplitterModule.prototype.init = function() {
 
 	this.scrollSpeed = 1;
 	this.scrollMultiplier = 1;
-	this.gui.add( this, 'scrollSpeed', -50, 50 );
+	this.gui.add( this, 'scrollSpeed', -50, 50 ).listen();
 	this.node.name = "SplitterModuleNode";
 
 	this.hitCount = 0;
@@ -37,11 +37,15 @@ SplitterModule.prototype.init = function() {
 	this.hitThreshold = 500;
 	this.gui.add( this, 'hitThreshold', 100, 1000 );
 	this.minWidth = this.margin * 2;
+	this.extended = false;
 }
 
 SplitterModule.prototype.update = function() {
 
 	if ( this.audio.useAudio ) {
+
+		this.scrollSpeed = utils.sign( this.scrollSpeed ) * this.audio.noisiness * .1;
+
 
 		var time = new Date().getTime();
 		var sinceLastHit = time - this.lastHit;
@@ -55,26 +59,28 @@ SplitterModule.prototype.update = function() {
 					this.hitCount = 0;
 				}
 
-				var option = this.hitCount % 5;
-				if ( option==0 )
-					this.splitAllRects( utils.random( 2, 4 ) );
-				if ( option==1 )
-					this.extendAllRects();
-				if ( option==2 )
-					this.splitAllRects( utils.random( 2, 4 ) );
-				if ( option==3 )
-					this.collapseAllRects();
-				if ( option==4 )
-					this.extendAllRects();
-
-				// if ( option==0 )
-				// 	this.jumble( 200 );
-				// if ( option==1 )
-				// 	this.strobe( 200 );
-				// if ( option==2 )
-				// 	this.throttle( 30, 200, 500 );
-				// if ( option==3 )
-				// 	this.lines.throttle( 20, 200, 500 );
+				// var option = this.hitCount % 4;
+				var option = Math.floor( utils.random( 3 ) );
+				if ( option==0 ) {
+					// console.log( '0 split' );
+					var num = this.splitAllRects( utils.random( 2, 4 ) );
+					if ( num==0 ) { // if no rects were split, either throttle if extended or extend
+						if ( this.extended )
+							this.throttle();
+						else
+							this.extendAllRects();
+					}
+				}
+				if ( option==1 ) {
+					// console.log( '1 extend' );
+					if ( this.extended )
+						this.collapseAllRects();
+					else
+						this.extendAllRects();
+				}
+				if ( option==2 ) {
+					this.throttle();
+				}
 			}
 		}
 		// this.lines.setWidth( audio.noisiness * .25 );
@@ -97,9 +103,9 @@ SplitterModule.prototype.update = function() {
 			node.position.x += WIDTH;
 	}
 
-	// if ( audio.kick_det.isKick() ) {
-	// 	this.flashFill();
-	// }
+	if ( audio.kick_det.isKick() ) {
+		this.flashFill();
+	}
 	// if ( audio.beat )
 	// 	this.splitRandomRect();
 
@@ -193,8 +199,16 @@ SplitterModule.prototype.splitRandomRect = function() {
 SplitterModule.prototype.extendAllRects = function() {
 	for ( var r in this.rects ) {
 		var rect = this.rects[r];
-		rect.extend( utils.random( 200, 400 ), utils.randomSign(), r * (250/this.rects.length) );
+		var dir = utils.randomSign();
+		var edge = dir > 0 ? rect.getBottom() : rect.getTop();
+		var height = (HEIGHT/2-this.margin*dir) - edge;
+		if ( Math.floor(utils.random(2))==1 )
+			height *= .5;
+		rect.extend( height, dir, 200 );
+		// rect.extend( utils.random( 200, 400 ), utils.randomSign(), r * (250/this.rects.length) ); // randomly staggers the animation
+		// rect.extend( utils.random( 200, 400 ), utils.randomSign(), 200 );
 	}
+	this.extended = true;
 }
 
 SplitterModule.prototype.collapseAllRects = function() {
@@ -202,6 +216,7 @@ SplitterModule.prototype.collapseAllRects = function() {
 		var rect = this.rects[r];
 		rect.collapseCenter( this.rectHeight );
 	}
+	this.extended = false;
 }
 
 SplitterModule.prototype.splitAllRects = function( num ) {
@@ -209,13 +224,32 @@ SplitterModule.prototype.splitAllRects = function( num ) {
 	num = (num==undefined)?2:num;
 
 	var rects = this.rects.slice(0);
+	var numRectsSplit = 0;
 	for ( var r in rects ) {
 		var rect = rects[r];
 		if ( TWEEN.getAll().indexOf( rect.tween ) > -1 || rect.getWidth() < this.minWidth )
 			continue;
 
 		this.splitRect( rect, num );
+		numRectsSplit++;
 	}
+
+	return numRectsSplit;
+}
+
+SplitterModule.prototype.throttle = function() {
+
+	this.scrollSpeed *= utils.randomSign();
+
+	var tween = new TWEEN.Tween(this)
+		.to({scrollMultiplier:Math.abs(100/this.scrollSpeed)}, 100) // scroll multiplier always jumps speed up to 100
+		.start();
+
+	var tweenBack = new TWEEN.Tween(this)
+		.to({scrollMultiplier:1}, 500 )
+		.easing( TWEEN.Easing.Quadratic.InOut );
+
+	tween.chain(tweenBack);
 }
 
 SplitterModule.prototype.splitRect = function ( rect, num ) {
@@ -252,15 +286,7 @@ SplitterModule.prototype.key = function( key ) {
 	}
 
 	if ( key == 'A' ) {
-		var tween = new TWEEN.Tween(this)
-			.to({scrollMultiplier:Math.abs(100/this.scrollSpeed)}, 100) // scroll multiplier always jumps speed up to 100
-			.start();
-
-		var tweenBack = new TWEEN.Tween(this)
-			.to({scrollMultiplier:1}, 500 )
-			.easing( TWEEN.Easing.Quadratic.InOut );
-
-		tween.chain(tweenBack);
+		this.throttle();
 	}
 
 	if ( key == 'Q' ) {

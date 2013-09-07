@@ -94,6 +94,14 @@ Rect.prototype.setHeight = function( height ) {
 		this.node.children[c].scale.y = height;
 }
 
+Rect.prototype.getTop = function() {
+	return this.node.position.y + this.getHeight()/2;
+}
+
+Rect.prototype.getBottom = function() {
+	return this.node.position.y - this.getHeight()/2;
+}
+
 Rect.prototype.splitNum = function( num, margin ) {
 
 	num = Math.floor( num );
@@ -174,13 +182,13 @@ Rect.prototype.split = function( margin ) {
 	return [ rect1, rect2 ];
 }
 
-Rect.prototype.extend = function( height, direction, delay ) {
+Rect.prototype.extend = function( height, direction, time, delay ) {
 	delay = (delay==undefined)?0:delay;
 
 	// extend the rectangle in one direction, maintaining the edge in the opposite direction
 	var bottomEdge = this.node.position.y - ( this.getHeight()/2 * direction );
 	var y = bottomEdge + ( height/2 * direction );
-	this.animate( undefined, y, this.getWidth(), height, 250, null, delay );
+	this.animate( undefined, y, this.getWidth(), height, time, null, delay );
 }
 
 Rect.prototype.collapseCenter = function( height ) {
