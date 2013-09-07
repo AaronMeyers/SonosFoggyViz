@@ -160,6 +160,10 @@
 
 			var effectSave, effectBlend;
 
+			var autoSwitch = false;
+			var switchInterval = 15;
+			var lastSwitch = new Date().getTime();
+
 			init();
 			animate();
 
@@ -234,6 +238,19 @@
 				}
 			}
 
+			function doAutoSwitch() {
+
+				// randomly choose a new module that is not this module
+				var nextModule;
+				do {
+					nextModule = utils.random( moduleNames );
+				} while ( nextModule == module );
+
+				console.log( 'switching to ' + nextModule );
+				switchModule( nextModule );
+
+			}
+
 			function switchModule( moduleName ) {
 				if ( modules[moduleName] == undefined )
 					return;
@@ -263,6 +280,7 @@
 
 				fadeOutTween.chain(fadeUpTween);
 
+				lastSwitch = new Date().getTime();
 
 				// activeModule.off();
 				// activeModule = modules[moduleName];
@@ -281,7 +299,11 @@
 				// gui.add( this, 'kickThreshold', 100, 1000 );
 				gui.add( this, 'maxNoises', 5, 30 );
 				gui.add( this, 'noiseScale', 0, 10 ).step( .25 );
-				gui.add( this, 'maxSpectrals', 5, 30 );
+				gui.add( this, 'autoSwitch' );
+				gui.add( this, 'switchInterval', 30, 240 ).step( 1 ).onChange( function( value ) {
+					lastSwitch = new Date().getTime();
+				});
+				// gui.add( this, 'maxSpectrals', 5, 30 );
 
 				gui.add( this, 'module', moduleNames ).onChange( function( value ) {
 					switchModule( value );
@@ -570,6 +592,9 @@
 			}
 
 			function animate() {
+
+				if ( autoSwitch && new Date().getTime() - lastSwitch > (switchInterval*1000) )
+					doAutoSwitch();
 
 				requestAnimationFrame( animate );
 
