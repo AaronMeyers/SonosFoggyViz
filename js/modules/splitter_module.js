@@ -84,6 +84,10 @@ SplitterModule.prototype.update = function() {
 				}
 			}
 		}
+		
+		if ( audio.kick_det.isKick() ) {
+			this.flashFill();
+		}
 		// this.lines.setWidth( audio.noisiness * .25 );
 	}
 
@@ -104,9 +108,6 @@ SplitterModule.prototype.update = function() {
 			node.position.x += WIDTH;
 	}
 
-	if ( audio.kick_det.isKick() ) {
-		this.flashFill();
-	}
 	// if ( audio.beat )
 	// 	this.splitRandomRect();
 
