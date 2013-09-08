@@ -11,9 +11,10 @@ LineManager = function( maxLines ) {
 	}
 
 	var geometry = shape.createPointsGeometry();
-	geometry.dynamic = true;
+	// geometry.dynamic = true;
 	// console.log( "geometry created with " + geometry.vertices.length + " vertices" );
 	this.mesh = new THREE.Line( geometry, new THREE.LineBasicMaterial({color:0xFFFFFF, linewidth:1}), THREE.LinePieces );
+	this.mesh.dynamic = true;
 
 	this.indexOffset = 0;
 }

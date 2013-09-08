@@ -78,6 +78,7 @@
 		<script src="./js/modules/empty_module.js"></script>
 		<script src="./js/modules/ribbon_module.js"></script>
 		<script src="./js/modules/parallax_module.js"></script>
+		<script src="./js/modules/shape_module.js"></script>
 
 		<script>
 
@@ -144,6 +145,7 @@
 				'sinewaveModule',
 				'dodecaModule',
 				'parallaxModule',
+				'shapeModule',
 			];
 
 			var postProcessing = {
@@ -354,9 +356,10 @@
 				modules.dodecaModule = new DodecaModule( audio, scene, gui.addFolder( 'Dodeca Module' ) );
 				modules.ribbonModule = new RibbonModule( audio, scene, gui.addFolder( 'Ribbon Module' ) );
 				modules.parallaxModule = new ParallaxModule( audio, scene, gui.addFolder( 'Parallax Module' ) );
+				modules.shapeModule = new ShapeModule( audio, scene, gui.addFolder( 'Shape Module' ) );
 				// modules.emptyModule = new EmptyModule( audio, scene, gui.addFolder( 'Empty Module' ) );
 
-				module = moduleNames[2];
+				module = moduleNames[6];
 				activeModule = modules[module];
 				activeModule.on();
 				activeModule.gui.open();

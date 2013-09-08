@@ -47,7 +47,7 @@ ParallaxModule.prototype.init = function() {
 }
 
 ParallaxModule.prototype.throttle = function() {
-
+	
 }
 
 ParallaxModule.prototype.update = function() {
