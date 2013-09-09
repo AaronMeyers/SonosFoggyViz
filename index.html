@@ -20,6 +20,7 @@
 				font-family: Monaco;
 				background: rgba(255,255,255,.2);
 				min-width: 200px;
+				display: none;
 			}
 			.box1 {
 				/*font-size:35px;*/
@@ -142,7 +143,7 @@
 				'testModule',
 				'ribbonModule',
 				'splitterModule',
-				'sinewaveModule',
+				// 'sinewaveModule',
 				'dodecaModule',
 				'parallaxModule',
 				'shapeModule',
@@ -167,13 +168,13 @@
 			var effectSave, effectBlend;
 
 			var autoSwitch = false;
-			var switchInterval = 15;
+			var switchInterval = 30;
 			var lastSwitch = new Date().getTime();
 			var testRect;
 
 			var whiteBar;
 			var whiteBarHeight = 100;
-			var whiteBarVisible = false;
+			var whiteBarVisible = true;
 
 			var lastHit = new Date().getTime();
 			var hitThreshold = 500;
@@ -255,10 +256,24 @@
 			function setWhiteBarHeight( height ) {
 				whiteBar.scale.y = height;
 				whiteBar.position.y = -HEIGHT*.5 + height*.5;
+				whiteBarHeight = height;
+				pulseWhiteBar();
 			}
 
 			function onKeyDown( event ) {
+
+				if ( event.which == 221 )
+					setWhiteBarHeight( whiteBarHeight + 5 );
+				else if ( event.which == 219 )
+					setWhiteBarHeight( whiteBarHeight - 5 );
+
+				if ( event.which == 187 )
+					noiseScale += .25;
+				else if ( event.which == 189 )
+					noiseScale -= .25;
+
 				var theChar = String.fromCharCode( event.which );
+				// console.log( 'which: ' + event.which + '   char: ' + theChar );
 
 				if ( event.which == 27 ) {
 					if ( audio.fft ) {
@@ -267,12 +282,12 @@
 				}
 
 				if ( event.which == 192 ) {
-					if ( $('#debug').css('display') == 'none' ) {
-						$('#debug').show();
+					if ( $(gui.domElement).css('display') == 'none' ) {
+						// $('#debug').show();
 						$(gui.domElement).show();
 					}
 					else {
-						$('#debug').hide();
+						// $('#debug').hide();
 						$(gui.domElement).hide();
 					}
 				}
@@ -339,19 +354,20 @@
 			function initGUI() {
 
 				gui = new dat.GUI({
-					height: 1000
+					height: 1000,
+					width:180
 				});
 
 				gui.add( this, 'bpm' ).listen();
 				// gui.add( this, 'scVelThresh', 50, 150 ).step( 1 );
 				// gui.add( this, 'kickThreshold', 100, 1000 );
 				gui.add( this, 'maxNoises', 5, 30 );
-				gui.add( this, 'noiseScale', 0, 10 ).step( .25 );
+				gui.add( this, 'noiseScale', 0, 10 ).step( .25 ).listen();
 				gui.add( this, 'autoSwitch' );
 				gui.add( this, 'switchInterval', 30, 240 ).step( 1 ).onChange( function( value ) {
 					lastSwitch = new Date().getTime();
 				});
-				gui.add( this, 'whiteBarHeight', 10, 400 ).step( 5 ).onChange( setWhiteBarHeight );
+				gui.add( this, 'whiteBarHeight', 10, 400 ).step( 5 ).listen().onChange( setWhiteBarHeight );
 				gui.add( this, 'whiteBarVisible' ).onChange( function(value) {
 					whiteBar.visible = value;
 				});
@@ -399,14 +415,14 @@
 			function initModules() {
 				modules.testModule = new TestModule( audio, scene, gui.addFolder( 'Test Module' ) );
 				modules.splitterModule = new SplitterModule( audio, scene, gui.addFolder( 'Splitter Module' ) );
-				modules.sinewaveModule = new SinewaveModule( audio, scene, gui.addFolder( 'Sinewave Module' ) );
+				// modules.sinewaveModule = new SinewaveModule( audio, scene, gui.addFolder( 'Sinewave Module' ) );
 				modules.dodecaModule = new DodecaModule( audio, scene, gui.addFolder( 'Dodeca Module' ) );
 				modules.ribbonModule = new RibbonModule( audio, scene, gui.addFolder( 'Ribbon Module' ) );
 				modules.parallaxModule = new ParallaxModule( audio, scene, gui.addFolder( 'Parallax Module' ) );
 				modules.shapeModule = new ShapeModule( audio, scene, gui.addFolder( 'Shape Module' ) );
 				// modules.emptyModule = new EmptyModule( audio, scene, gui.addFolder( 'Empty Module' ) );
 
-				module = moduleNames[6];
+				module = moduleNames[5];
 				activeModule = modules[module];
 				activeModule.on();
 				activeModule.gui.open();
@@ -670,8 +686,8 @@
 				if ( audio.beat )
 					audio.beat = false;
 
-				composer.render();
-				// renderer.render(scene, camera);
+				// composer.render();
+				renderer.render(scene, camera);
 
 			}
 

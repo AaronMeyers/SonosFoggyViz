@@ -72,7 +72,7 @@ ShapeModule.prototype.init = function() {
 	this.apart = 'together';
 	this.tweaking = false;
 	this.tweakingStep = 8; // number of frames between a tweaking animation
-	gui.add( this, 'tweakingStep', 1, 16 ).step( 1 );
+	this.gui.add( this, 'tweakingStep', 1, 16 ).step( 1 );
 	this.tweakingCounter = 0;
 	this.tweakingFunction = this.pinch;
 
@@ -86,6 +86,7 @@ ShapeModule.prototype.init = function() {
 
 	this.node.add( this.mesh );
 	this.node.position.x = WIDTH/2;
+	this.hitCounter = 0;
 
 	// this.setVertsForSquare( this.mesh.geometry.vertices, 900, 20 );
 	// this.mesh.geometry.verticesNeedUpdate = true;
@@ -128,29 +129,46 @@ ShapeModule.prototype.update = function() {
 		var time = new Date().getTime();
 		var sinceLastHit = time - this.lastHit;
 
-		if ( !this.tweaking && this.audio.noisiness / this.audio.noiseAvg >= 1.5 && this.audio.noiseHitsRed==1 )
-			this.pinchRandom();
+		// if ( !this.tweaking && this.audio.noisiness / this.audio.noiseAvg >= 1.5 && this.audio.noiseHitsRed==1 && sinceLastHit > 500 )
+		// 	this.pinchRandom();
 
+		var pinched = false;
 		if ( sinceLastHit > this.hitThreshold ) {
 			if ( this.audio.noiseHitsRed == 1 && this.audio.noisiness / this.audio.noiseAvg >= 1.5 ) {
 				this.lastHit = time;
+				this.hitCounter++;
+				if ( this.hitCounter % 15 == 0 ) {
+					this.tweaking = !this.tweaking;
+				}
 
+				if ( !this.tweaking ) {
+					if ( Math.random() > .5 )
+						this.pinchAcross();
+					else
+						this.pinchAround();
+					pinched = true;
+				}
 
-				var option = Math.floor( utils.random( 3 ) );
+				var option = Math.floor( utils.random( 2 ) );
 				if ( option==0 ) {
 					this.breakApart( Math.random()>.5?'eight':'two' );
 					// this.pinch();
 				}
 				else if ( option==1 ) {
-					// this.pinch();
-					this.tweaking = !this.tweaking;
-				}
-				else if ( option==2 ) {
 					this.throttleRotation();
 				}
 
 			}
 		}
+
+		// if ( audio.kick_det.isKick() ) {
+		// 	if ( !this.tweaking && !pinched ) {
+		// 		if ( Math.random() > .5 )
+		// 			this.pinchAcross();
+		// 		else
+		// 			this.pinchAround();
+		// 	}
+		// }
 	}
 
 	if ( this.tweaking && ++this.tweakingCounter >= this.tweakingStep ) {
@@ -253,7 +271,7 @@ ShapeModule.prototype.throttleRotation = function() {
 		.start();
 
 	var tweenBack = new TWEEN.Tween(this)
-		.to({rotationSpeedMultiplier:1})
+		.to({rotationSpeedMultiplier:1},500)
 		.easing(TWEEN.Easing.Quadratic.InOut);
 
 	tween.chain(tweenBack);
@@ -345,12 +363,12 @@ ShapeModule.prototype.pinch = function( cp ) {
 	}
 
 	var tween = new TWEEN.Tween(cp)
-		.to({x:0,y:0}, 200 )
+		.to({x:0,y:0}, 100 )
 		.easing( TWEEN.Easing.Quadratic.InOut )
 		.start();
 
 	var tweenBack = new TWEEN.Tween(cp)
-		.to({x:cp.x,y:cp.y}, 500 )
+		.to({x:cp.x,y:cp.y}, 300 )
 		.easing( TWEEN.Easing.Quadratic.InOut );
 
 	tween.chain(tweenBack);
