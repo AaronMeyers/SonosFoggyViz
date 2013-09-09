@@ -35,16 +35,10 @@ ShapeModule.prototype.off = function() {
 
 ShapeModule.prototype.init = function() {
 
-	var dim = 600;
+	this.dim = 600;
 	this.rectsPerSide = 50;
 	this.length = 4 * this.rectsPerSide;
 
-	var corners = [
-		new THREE.Vector3( -dim * .5, dim * .5, 0 ), // upper left
-		new THREE.Vector3( dim * .5, dim * .5, 0 ), // upper right
-		new THREE.Vector3( dim * .5, -dim * .5, 0 ), // lower right
-		new THREE.Vector3( -dim * .5, -dim * .5, 0 )
-	];
 
 
 	this.baseThickness = 20;
@@ -66,9 +60,46 @@ ShapeModule.prototype.init = function() {
 
 	this.controlPoints = new Array();
 	this.numPerSegment = 4; // make sure this is even
-	// this.cpNode.position.x = WIDTH/2;
-	this.node.add( this.cpNode );
-	// go through each segemtn and create control points between
+	this.initControlPoints();
+
+	this.spline = new THREE.Spline( this.controlPoints );
+	this.geometry = new THREE.PlaneGeometry( 100, 100, 1, this.length-1 );
+	this.material = new THREE.MeshBasicMaterial({color:0xFFFFFF,wireframe:false});
+	this.mesh = new THREE.Mesh( this.geometry, this.material );
+	this.mesh.dynamic = true;
+
+	// states
+	this.apart = false;
+	this.tweaking = false;
+	this.tweakingStep = 4; // number of frames between a tweaking animation
+	gui.add( this, 'tweakingStep', 1, 16 ).step( 1 );
+	this.tweakingCounter = 0;
+	this.tweakingFunction = this.pinch;
+
+	this.meshes = [ this.mesh ];
+	for ( var i =0; i<3; i++ ) {
+		var clone = this.mesh.clone();
+		this.meshes.push( clone );
+		// clone.position.x = 100 * i;
+		this.node.add( clone );
+	}
+
+	this.node.add( this.mesh );
+	this.node.position.x = WIDTH/2;
+
+	// this.setVertsForSquare( this.mesh.geometry.vertices, 900, 20 );
+	// this.mesh.geometry.verticesNeedUpdate = true;
+}
+
+ShapeModule.prototype.initControlPoints = function() {
+	
+	var corners = [
+		new THREE.Vector3( -this.dim * .5, this.dim * .5, 0 ), // upper left
+		new THREE.Vector3( this.dim * .5, this.dim * .5, 0 ), // upper right
+		new THREE.Vector3( this.dim * .5, -this.dim * .5, 0 ), // lower right
+		new THREE.Vector3( -this.dim * .5, -this.dim * .5, 0 )
+	];
+	
 	for ( var i=0; i<corners.length; i++ ) {
 		var start = corners[i];
 		var end = corners[(i+1)%corners.length];
@@ -86,29 +117,7 @@ ShapeModule.prototype.init = function() {
 	for ( var i=0; i<offsetPart.length; i++ ) this.controlPoints.push( offsetPart[i] );
 	// add the first corner to complete the loop
 	this.controlPoints.push( this.controlPoints[0] );
-
-	this.spline = new THREE.Spline( this.controlPoints );
-	this.geometry = new THREE.PlaneGeometry( 100, 100, 1, this.length-1 );
-	this.material = new THREE.MeshBasicMaterial({color:0xFFFFFF,wireframe:false});
-	this.mesh = new THREE.Mesh( this.geometry, this.material );
-	this.mesh.dynamic = true;
-
-	this.apart = false;
-
-	this.meshes = [ this.mesh ];
-	for ( var i =0; i<3; i++ ) {
-		var clone = this.mesh.clone();
-		this.meshes.push( clone );
-		// clone.position.x = 100 * i;
-		this.node.add( clone );
-	}
-
-	this.node.add( this.mesh );
-	this.node.position.x = WIDTH/2;
-
-	// this.setVertsForSquare( this.mesh.geometry.vertices, 900, 20 );
-	// this.mesh.geometry.verticesNeedUpdate = true;
-}
+};
 
 ShapeModule.prototype.update = function() {
 	if ( this.audio.useAudio ) {
@@ -124,6 +133,11 @@ ShapeModule.prototype.update = function() {
 				// console.log( 'hit' );
 			}
 		}
+	}
+
+	if ( this.tweaking && ++this.tweakingCounter >= this.tweakingStep ) {
+		this.tweakingCounter = 0;
+		this.tweakingFunction();
 	}
 
 	this.sineSeed += this.sineSpeed;
@@ -252,19 +266,32 @@ ShapeModule.prototype.pinchRandom = function() {
 }
 
 ShapeModule.prototype.pinchAround = function( startIndex ) {
-	for ( var i=0; i<4; i++ ) {
-		var index = this.numPerSegment*i+startIndex;
-		this.pinch( this.controlPoints[index] );
-	}
+	if ( startIndex == undefined )
+		startIndex = this.getNextPinchPoint();
+
+	startIndex = startIndex % ( (this.controlPoints.length-1)*.25 );
+
+	this.pinch( this.controlPoints[startIndex] );
+	this.pinch( this.controlPoints[(startIndex+(this.controlPoints.length-1)*.25)%this.controlPoints.length] );
+	this.pinch( this.controlPoints[(startIndex+(this.controlPoints.length-1)*.5)%this.controlPoints.length] );
+	this.pinch( this.controlPoints[(startIndex+(this.controlPoints.length-1)*.75)%this.controlPoints.length] );
 }
 
 ShapeModule.prototype.pinchAcross = function( startIndex ) {
+	if ( startIndex == undefined )
+		startIndex = this.getNextPinchPoint();
+
 	startIndex = startIndex % ( (this.controlPoints.length-1)*.5 );
 	this.pinch( this.controlPoints[startIndex] );
 	this.pinch( this.controlPoints[(startIndex+(this.controlPoints.length-1)/2)%this.controlPoints.length] );
 }
 
 ShapeModule.prototype.pinch = function( cp ) {
+
+	if ( cp == undefined ) {
+		var startIndex = this.getNextPinchPoint();
+		cp = this.controlPoints[startIndex];
+	}
 
 	// check if this cp is already being animated
 	var isTweening = false;
@@ -295,12 +322,18 @@ ShapeModule.prototype.setControlPoints = function() {
 
 }
 
-
+ShapeModule.prototype.getNextPinchPoint = function() {
+	return (++this.pinchCounter)%(this.controlPoints.length-1);
+};
 
 ShapeModule.prototype.key = function( key ) {
 
 	if ( key == 'A' ) {
 		this.throttleRotation();	
+	}
+
+	if ( key == 'T' ) {
+		this.tweaking = !this.tweaking;
 	}
 
 	if ( key == 'S' ) {
@@ -317,14 +350,14 @@ ShapeModule.prototype.key = function( key ) {
 
 	if ( key =='R' ) {
 		// this.pinchAcross( Math.floor(utils.random(this.controlPoints.length) ) );
-		this.pinchAcross( (++this.pinchCounter)%(this.controlPoints.length-1) );
+		this.pinchAcross();
 	}
 
 	if ( key == 'W' ) {
-		this.pinchAround( Math.floor(utils.random(this.numPerSegment) ) );
+		this.pinchAround();
 	}
 
 	if ( key == 'E' ) {
-		this.pinch( this.controlPoints[ (++this.pinchCounter)%(this.controlPoints.length-1) ] ); 
+		this.pinch();
 	}
 }
