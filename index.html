@@ -173,7 +173,7 @@
 
 			var whiteBar;
 			var whiteBarHeight = 100;
-			var whiteBarVisible = true;
+			var whiteBarVisible = false;
 
 			var lastHit = new Date().getTime();
 			var hitThreshold = 500;
@@ -229,6 +229,7 @@
 				var material = new THREE.MeshBasicMaterial( {color:0xffffff, transparent:true} );
 				whiteBar = new THREE.Mesh( geometry, material );
 				whiteBar.scale.x = WIDTH;
+				whiteBar.visible = whiteBarVisible;
 				whiteBar.position.set( WIDTH/2, 0, 1000 );
 
 				setWhiteBarHeight( whiteBarHeight );
@@ -236,6 +237,9 @@
 			}
 
 			function pulseWhiteBar() {
+				if ( !whiteBarVisible )
+					return;
+
 				whiteBar.visible = true;
 				whiteBar.material.opacity = 1;
 
@@ -348,6 +352,9 @@
 					lastSwitch = new Date().getTime();
 				});
 				gui.add( this, 'whiteBarHeight', 10, 400 ).step( 5 ).onChange( setWhiteBarHeight );
+				gui.add( this, 'whiteBarVisible' ).onChange( function(value) {
+					whiteBar.visible = value;
+				});
 				// gui.add( this, 'maxSpectrals', 5, 30 );
 
 				gui.add( this, 'module', moduleNames ).onChange( function( value ) {
@@ -399,7 +406,7 @@
 				modules.shapeModule = new ShapeModule( audio, scene, gui.addFolder( 'Shape Module' ) );
 				// modules.emptyModule = new EmptyModule( audio, scene, gui.addFolder( 'Empty Module' ) );
 
-				module = moduleNames[6];
+				module = moduleNames[5];
 				activeModule = modules[module];
 				activeModule.on();
 				activeModule.gui.open();

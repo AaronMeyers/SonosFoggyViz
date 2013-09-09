@@ -62,6 +62,10 @@ ParallaxModule.prototype.update = function() {
 				// console.log( 'hit' );
 			}
 		}
+		
+		if ( audio.kick_det.isKick() ) {
+			this.flashFill();
+		}
 	}
 
 	for ( var r in this.rects ) {
@@ -82,12 +86,59 @@ ParallaxModule.prototype.update = function() {
 	// this.lineManager.update();
 }
 
+ParallaxModule.prototype.halt = function() {
+	var tween = new TWEEN.Tween(this)
+		.to({scrollMultiplier:0}, 250 )
+		.easing(TWEEN.Easing.Quadratic.InOut)
+		.onComplete(function(){
+			this.scrollSpeed *= utils.randomSign();
+			// this.scrollSpeed *= -1;
+		})
+		.start();
+
+	var tweenUp = new TWEEN.Tween(this)
+		.to({scrollMultiplier:2}, 200 )
+		.easing(TWEEN.Easing.Quadratic.InOut);
+
+	var tweenBack = new TWEEN.Tween(this)
+		.to({scrollMultiplier:1}, 200 )
+		.easing(TWEEN.Easing.Quadratic.InOut);
+
+
+	// tweenUp.chain(tweenBack);
+	// tween.chain(tweenUp);
+
+	tween.chain(tweenBack);
+};
+
+ParallaxModule.prototype.flashFill = function() {
+	this.setFill( true );
+	var tween = new TWEEN.Tween({module:this, material:planeMaterial, opacity:planeMaterial.opacity})
+		.to({opacity:0}, 250 )
+		.onUpdate( function() {
+			this.material.opacity = this.opacity;
+		})
+		.onComplete( function() {
+			// after we've faded out the fill, turn the fill off and set the material back to being fully opaque
+			this.module.setFill( false );
+			this.material.opacity = 1.0;
+		})
+		.start();
+}
+
+ParallaxModule.prototype.setFill = function( fill ) {
+	this.filled = fill;
+	for ( var r in this.rects ) {
+		this.rects[r].setFill( this.filled );
+	}
+}
+
 ParallaxModule.prototype.throttle = function() {
 
 	this.scrollSpeed *= utils.randomSign();
 
 	var tween = new TWEEN.Tween(this)
-		.to({scrollMultiplier:Math.abs(20/this.scrollSpeed)}, 100) // scroll multiplier always jumps speed up to 100
+		.to({scrollMultiplier:Math.abs(5/this.scrollSpeed)}, 100) // scroll multiplier always jumps speed up to 100
 		.start();
 
 	var tweenBack = new TWEEN.Tween(this)
@@ -97,7 +148,31 @@ ParallaxModule.prototype.throttle = function() {
 	tween.chain(tweenBack);
 }
 
+
 ParallaxModule.prototype.key = function( key ) {
 	if ( key == 'A' )
 		this.throttle();
+
+	if ( key == 'Q' )
+		this.halt();
+
+	if ( key == 'W' )
+		this.flashFill();
+
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
