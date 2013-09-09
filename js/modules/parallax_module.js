@@ -57,8 +57,8 @@ ParallaxModule.prototype.init = function() {
 
 
 	this.lastHit = new Date().getTime();
-	this.hitThreshold = 500;
-	this.gui.add( this, 'hitThreshold', 100, 1000 );
+	this.hitThreshold = 1000;
+	this.gui.add( this, 'hitThreshold', 100, 2000 );
 }
 
 ParallaxModule.prototype.getRandomRectPositionAndScale = function() {

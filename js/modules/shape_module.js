@@ -19,8 +19,8 @@ ShapeModule = function( audio, scene, guiFolder ) {
 	this.gui = guiFolder;
 
 	this.lastHit = new Date().getTime();
-	this.hitThreshold = 500;
-	this.gui.add( this, 'hitThreshold', 100, 1000 );
+	this.hitThreshold = 1000;
+	this.gui.add( this, 'hitThreshold', 100, 2000 );
 
 	this.init();
 }
@@ -48,7 +48,7 @@ ShapeModule.prototype.init = function() {
 	this.sineSeed = 0;
 	this.sineSpeed = .25;
 	this.gui.add( this, 'sineSpeed' ).listen();
-	this.amplitude = 15;
+	this.amplitude = 1;
 	this.gui.add( this, 'amplitude' ).listen();
 	this.amplitudeMultiplier = 1;
 
@@ -71,7 +71,7 @@ ShapeModule.prototype.init = function() {
 	// states
 	this.apart = 'together';
 	this.tweaking = false;
-	this.tweakingStep = 4; // number of frames between a tweaking animation
+	this.tweakingStep = 8; // number of frames between a tweaking animation
 	gui.add( this, 'tweakingStep', 1, 16 ).step( 1 );
 	this.tweakingCounter = 0;
 	this.tweakingFunction = this.pinch;
@@ -123,14 +123,32 @@ ShapeModule.prototype.update = function() {
 	if ( this.audio.useAudio ) {
 
 		// this.thicknessMultiplier = utils.cmap( this.audio.noiseAvg, 0, 80, 1, 5 );
-		this.amplitudeMultiplier = utils.cmap( this.audio.noiseAvg, 2, 80, 0, 5 );
+		this.amplitudeMultiplier = utils.cmap( this.audio.noiseAvg, 2, 80, 0, 30 );
 
 		var time = new Date().getTime();
 		var sinceLastHit = time - this.lastHit;
+
+		if ( !this.tweaking && this.audio.noisiness / this.audio.noiseAvg >= 1.5 && this.audio.noiseHitsRed==1 )
+			this.pinchRandom();
+
 		if ( sinceLastHit > this.hitThreshold ) {
 			if ( this.audio.noiseHitsRed == 1 && this.audio.noisiness / this.audio.noiseAvg >= 1.5 ) {
 				this.lastHit = time;
-				// console.log( 'hit' );
+
+
+				var option = Math.floor( utils.random( 3 ) );
+				if ( option==0 ) {
+					this.breakApart( Math.random()>.5?'eight':'two' );
+					// this.pinch();
+				}
+				else if ( option==1 ) {
+					// this.pinch();
+					this.tweaking = !this.tweaking;
+				}
+				else if ( option==2 ) {
+					this.throttleRotation();
+				}
+
 			}
 		}
 	}
@@ -168,19 +186,18 @@ ShapeModule.prototype.breakApart = function( form ) {
 		new THREE.Vector3( dist*3, -dist, 0 ),
 		new THREE.Vector3( dist, -dist, 0 ),
 		new THREE.Vector3( -dist, -dist, 0 ),
-		new THREE.Vector3( -dist*3, -dist, 0 )
+		new THREE.Vector3( -dist*3, -dist, 0 ),
 	] : [
 		new THREE.Vector3( -dist, 0, 0 ),
 		new THREE.Vector3( -dist, 0, 0 ),
+		new THREE.Vector3( dist, 0, 0 ),
+		new THREE.Vector3( dist, 0, 0 ),
+		new THREE.Vector3( dist, 0, 0 ),
+		new THREE.Vector3( dist, 0, 0 ),
 		new THREE.Vector3( -dist, 0, 0 ),
 		new THREE.Vector3( -dist, 0, 0 ),
-		new THREE.Vector3( dist, 0, 0 ),
-		new THREE.Vector3( dist, 0, 0 ),
-		new THREE.Vector3( dist, 0, 0 ),
-		new THREE.Vector3( dist, 0, 0 )
 	];
 
-	console.log( this.meshes.length );
 	for ( var i = 0; i<this.meshes.length; i++ ) {
 		var mesh = this.meshes[i];
 		var tweenObj = {
@@ -191,7 +208,7 @@ ShapeModule.prototype.breakApart = function( form ) {
 		}
 		console.log( positions[i].x, positions[i].y );
 		var tween = new TWEEN.Tween(tweenObj)
-			.to({x: positions[i].x,y: positions[i].y, scale:scale}, 250)
+			.to({x: positions[i].x,y: positions[i].y, scale:scale}, 400)
 			.easing(TWEEN.Easing.Quadratic.InOut)
 			.onUpdate(function(){
 				this.mesh.position.set( this.x, this.y, 0 );
@@ -214,7 +231,7 @@ ShapeModule.prototype.comeTogether = function() {
 		}
 
 		var tween = new TWEEN.Tween(tweenObj)
-			.to({x:0,y:0,scale:1}, 250)
+			.to({x:0,y:0,scale:1}, 400)
 			.easing(TWEEN.Easing.Quadratic.InOut)
 			.onUpdate(function(){
 				this.mesh.position.set(this.x, this.y, 0 );
@@ -273,7 +290,17 @@ ShapeModule.prototype.setVertsFromSpline = function( verts, spline ) {
 }
 
 ShapeModule.prototype.pinchRandom = function() {
-	this.pinch( utils.random(this.controlPoints ) );
+	// this.pinch( utils.random(this.controlPoints ) );
+	var kind = Math.floor( utils.random( 3 ) );
+	if ( kind == 0 ) {
+		this.pinch();
+	}
+	else if ( kind == 1 ) {
+		this.pinchAcross();
+	}
+	else if ( kind == 2 ) {
+		this.pinchAround();
+	}
 }
 
 ShapeModule.prototype.pinchAround = function( startIndex ) {
@@ -352,7 +379,7 @@ ShapeModule.prototype.key = function( key ) {
 	}
 
 	if ( key == 'D' ) {
-		this.breakApart(false);
+		this.breakApart( 'two' );
 	}
 
 	if ( key == 'Q' ) {
