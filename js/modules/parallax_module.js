@@ -37,8 +37,8 @@ ParallaxModule.prototype.init = function() {
 		this.rects.push( rect );
 	}
 
-	this.lineManager = new LineManager(1000);
-	this.node.add( this.lineManager.mesh );
+	// this.lineManager = new LineManager(1000);
+	// this.node.add( this.lineManager.mesh );
 
 
 	this.lastHit = new Date().getTime();
@@ -46,13 +46,9 @@ ParallaxModule.prototype.init = function() {
 	this.gui.add( this, 'hitThreshold', 100, 1000 );
 }
 
-ParallaxModule.prototype.throttle = function() {
-	
-}
-
 ParallaxModule.prototype.update = function() {
 
-	this.lineManager.clear();
+	// this.lineManager.clear();
 
 	if ( this.audio.useAudio ) {
 
@@ -77,13 +73,13 @@ ParallaxModule.prototype.update = function() {
 		if ( rect.node.position.x < 0 )
 			rect.node.position.x += WIDTH;
 
-		this.lineManager.addLine( 0, 0, rect.node.position.x, rect.node.position.y );
+		// this.lineManager.addLine( 0, 0, rect.node.position.x, rect.node.position.y );
 
 		rect.setThickness( this.rectThickness );
 		rect.update();
 	}
 	
-	this.lineManager.update();
+	// this.lineManager.update();
 }
 
 ParallaxModule.prototype.throttle = function() {

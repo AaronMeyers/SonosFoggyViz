@@ -33,42 +33,11 @@ ShapeModule.prototype.off = function() {
 	this.scene.remove( this.node );
 }
 
-ShapeModule.prototype.setVertsFromSpline = function( verts, spline ) {
-
-	var positions = new Array();
-	for ( var i=0; i<this.length; i++) {
-		var norm = i / (this.length-1);
-		var pt = spline.getPoint( norm );
-		var pos = new THREE.Vector3( pt.x, pt.y, 0 );
-		positions.push( pos );
-		console.log( pt );
-	}
-
-	var thickness = 20;
-
-	for ( var i=0; i<this.length; i++ ) {
-		var v1 = verts[i*2+0];
-		var v2 = verts[i*2+1];
-		// console.log( i + '/' + this.length );
-		var secondIndex = (i+1)%(positions.length-1);
-		var dir = positions[i].clone().sub( positions[secondIndex] ).normalize();
-		if ( i==this.length-1 ) {
-			console.log( dir.x + ',' + dir.y );
-		}
-		v1.x = positions[i].x - (thickness * dir.y);
-		v1.y = positions[i].y + (thickness * dir.x);
-		v2.x = positions[i].x + (thickness * dir.y);
-		v2.y = positions[i].y - (thickness * dir.x);
-	}
-
-}
-
-
 ShapeModule.prototype.init = function() {
 
-	var dim = 900;
-	this.rectsPerSide = 30;
-	this.length = 4 * this.rectsPerSide + 1;
+	var dim = 600;
+	this.rectsPerSide = 50;
+	this.length = 4 * this.rectsPerSide;
 
 	var corners = [
 		new THREE.Vector3( -dim * .5, dim * .5, 0 ), // upper left
@@ -78,12 +47,25 @@ ShapeModule.prototype.init = function() {
 	];
 
 
+	this.baseThickness = 20;
+	this.thicknessMultiplier = 1;
+	this.gui.add( this, 'baseThickness', 10, 100 ).listen();
+
+	this.sineSeed = 0;
+	this.sineSpeed = .25;
+	this.gui.add( this, 'sineSpeed' ).listen();
+	this.amplitude = 15;
+	this.gui.add( this, 'amplitude' ).listen();
+	this.amplitudeMultiplier = 1;
+
+	this.rotationSpeed = .001;
+	this.rotationSpeedMultiplier = 1;
+	this.gui.add( this, 'rotationSpeed' ).listen();
+
+	this.pinchCounter = 0;
 
 	this.controlPoints = new Array();
-	var numPerSegment = 4; // make sure this is even
-
-	var mesh = new THREE.Mesh( new THREE.PlaneGeometry( 10, 10, 1, 1 ), new THREE.MeshBasicMaterial({color:0xFFFFFF}) );
-	this.cpNode = new THREE.Object3D();
+	this.numPerSegment = 4; // make sure this is even
 	// this.cpNode.position.x = WIDTH/2;
 	this.node.add( this.cpNode );
 	// go through each segemtn and create control points between
@@ -91,38 +73,48 @@ ShapeModule.prototype.init = function() {
 		var start = corners[i];
 		var end = corners[(i+1)%corners.length];
 
-		for ( var j=0; j<numPerSegment; j++ ) {
-			var lerpAmt = j / numPerSegment;
+		for ( var j=0; j<this.numPerSegment; j++ ) {
+			var lerpAmt = j / this.numPerSegment;
 			var pt = new THREE.Vector3();
 			pt.x = utils.lerp( start.x, end.x, lerpAmt );
 			pt.y = utils.lerp( start.y, end.y, lerpAmt );
-			var square = mesh.clone();
-			square.position.set( pt.x, pt.y, 0 );
-			this.cpNode.add( square );
 			this.controlPoints.push( pt );
 		}
 	}
 	// offset the control points by half the num per segemtn
-	var offsetPart = this.controlPoints.splice(0,numPerSegment/2);
+	var offsetPart = this.controlPoints.splice(0,this.numPerSegment/2);
 	for ( var i=0; i<offsetPart.length; i++ ) this.controlPoints.push( offsetPart[i] );
 	// add the first corner to complete the loop
-	this.controlPoints.push( this.controlPoints[0].clone() );
+	this.controlPoints.push( this.controlPoints[0] );
 
 	this.spline = new THREE.Spline( this.controlPoints );
 	this.geometry = new THREE.PlaneGeometry( 100, 100, 1, this.length-1 );
-	this.material = new THREE.MeshBasicMaterial({color:0xFFFFFF,wireframe:true});
+	this.material = new THREE.MeshBasicMaterial({color:0xFFFFFF,wireframe:false});
 	this.mesh = new THREE.Mesh( this.geometry, this.material );
 	this.mesh.dynamic = true;
+
+	this.apart = false;
+
+	this.meshes = [ this.mesh ];
+	for ( var i =0; i<3; i++ ) {
+		var clone = this.mesh.clone();
+		this.meshes.push( clone );
+		// clone.position.x = 100 * i;
+		this.node.add( clone );
+	}
 
 	this.node.add( this.mesh );
 	this.node.position.x = WIDTH/2;
 
-	this.setVertsFromSpline( this.mesh.geometry.vertices, this.spline );
-	this.mesh.geometry.verticesNeedUpdate = true;
+	// this.setVertsForSquare( this.mesh.geometry.vertices, 900, 20 );
+	// this.mesh.geometry.verticesNeedUpdate = true;
 }
 
 ShapeModule.prototype.update = function() {
 	if ( this.audio.useAudio ) {
+
+		// this.thicknessMultiplier = utils.cmap( this.audio.noiseAvg, 0, 80, 1, 5 );
+		this.amplitudeMultiplier = utils.cmap( this.audio.noiseAvg, 2, 80, 0, 5 );
 
 		var time = new Date().getTime();
 		var sinceLastHit = time - this.lastHit;
@@ -133,8 +125,206 @@ ShapeModule.prototype.update = function() {
 			}
 		}
 	}
+
+	this.sineSeed += this.sineSpeed;
+	// this.mesh.rotation.z += this.rotationSpeed;
+	for ( var m in this.meshes ) {
+		var mesh = this.meshes[m];
+		mesh.rotation.z += this.rotationSpeed * this.rotationSpeedMultiplier;
+	}
+
+	this.setVertsFromSpline( this.mesh.geometry.vertices, this.spline );
+	this.mesh.geometry.verticesNeedUpdate = true;
 }
+
+ShapeModule.prototype.breakApart = function( in4 ) {
+	if ( this.apart ) {
+		this.comeTogether();
+		return;
+	}
+
+	var dist = in4 ? 250 : 500;
+	var scale = in4 ? .5 : 1;
+	var positions = in4 ? [
+		new THREE.Vector3( -dist, dist, 0 ),
+		new THREE.Vector3( dist, dist, 0 ),
+		new THREE.Vector3( dist, -dist, 0 ),
+		new THREE.Vector3( -dist, -dist, 0 )
+	] : [
+		new THREE.Vector3( -dist, 0, 0 ),
+		new THREE.Vector3( -dist, 0, 0 ),
+		new THREE.Vector3( dist, 0, 0 ),
+		new THREE.Vector3( dist, 0, 0 )
+	];
+
+	for ( var i = 0; i<this.meshes.length; i++ ) {
+		var mesh = this.meshes[i];
+		var tweenObj = {
+			mesh: mesh,
+			x: mesh.position.x,
+			y: mesh.position.y,
+			scale: mesh.scale.x
+		}
+		var tween = new TWEEN.Tween(tweenObj)
+			.to({x: positions[i].x,y: positions[i].y, scale:scale}, 250)
+			.easing(TWEEN.Easing.Quadratic.InOut)
+			.onUpdate(function(){
+				this.mesh.position.set( this.x, this.y, 0 );
+				this.mesh.scale.set(this.scale,this.scale,this.scale);
+			})
+			.start();
+	}
+
+	this.apart = true;
+}
+
+ShapeModule.prototype.comeTogether = function() {
+	for ( var i=0; i<this.meshes.length; i++ ) {
+		var mesh = this.meshes[i];
+		var tweenObj = {
+			mesh: mesh,
+			x: mesh.position.x,
+			y: mesh.position.y,
+			scale: mesh.scale.x
+		}
+
+		var tween = new TWEEN.Tween(tweenObj)
+			.to({x:0,y:0,scale:1}, 250)
+			.easing(TWEEN.Easing.Quadratic.InOut)
+			.onUpdate(function(){
+				this.mesh.position.set(this.x, this.y, 0 );
+				this.mesh.scale.set(this.scale,this.scale,this.scale);
+			})
+			.start();
+	}
+	this.apart = false;
+}
+
+ShapeModule.prototype.throttleRotation = function() {
+
+
+	this.rotationSpeed *= utils.randomSign();
+
+	var tween = new TWEEN.Tween(this)
+		.to({rotationSpeedMultiplier:100},200)
+		.easing(TWEEN.Easing.Quadratic.InOut)
+		.start();
+
+	var tweenBack = new TWEEN.Tween(this)
+		.to({rotationSpeedMultiplier:1})
+		.easing(TWEEN.Easing.Quadratic.InOut);
+
+	tween.chain(tweenBack);
+}
+
+ShapeModule.prototype.setVertsFromSpline = function( verts, spline ) {
+
+	var positions = new Array();
+	for ( var i=0; i<this.length; i++) {
+		var norm = i / (this.length-1);
+		var pt = spline.getPoint( norm );
+		var pos = new THREE.Vector3( pt.x, pt.y, 0 );
+		positions.push( pos );
+		// console.log( pt );
+	}
+
+
+	for ( var i=0; i<this.length; i++ ) {
+		var v1 = verts[i*2+0];
+		var v2 = verts[i*2+1];
+		// console.log( i + '/' + this.length );
+		var secondIndex = (i+1)%(positions.length-1);
+		var dir = positions[i].clone().sub( positions[secondIndex] ).normalize();
+
+
+		var sine = utils.map( Math.sin( this.sineSeed + (i/(this.length-1)) * Math.PI * 64 ), -1, 1, 0, 1 );
+		var thickness = this.baseThickness * this.thicknessMultiplier + sine*this.amplitude*this.amplitudeMultiplier;
+		
+		v1.x = positions[i].x - (thickness * dir.y);
+		v1.y = positions[i].y + (thickness * dir.x);
+		v2.x = positions[i].x + (thickness * dir.y);
+		v2.y = positions[i].y - (thickness * dir.x);
+	}
+}
+
+ShapeModule.prototype.pinchRandom = function() {
+	this.pinch( utils.random(this.controlPoints ) );
+}
+
+ShapeModule.prototype.pinchAround = function( startIndex ) {
+	for ( var i=0; i<4; i++ ) {
+		var index = this.numPerSegment*i+startIndex;
+		this.pinch( this.controlPoints[index] );
+	}
+}
+
+ShapeModule.prototype.pinchAcross = function( startIndex ) {
+	startIndex = startIndex % ( (this.controlPoints.length-1)*.5 );
+	this.pinch( this.controlPoints[startIndex] );
+	this.pinch( this.controlPoints[(startIndex+(this.controlPoints.length-1)/2)%this.controlPoints.length] );
+}
+
+ShapeModule.prototype.pinch = function( cp ) {
+
+	// check if this cp is already being animated
+	var isTweening = false;
+	var allTweens = TWEEN.getAll();
+	for ( var t in allTweens ) {
+		if ( allTweens[t].getObject()==cp )
+			isTweening = true;
+	}
+
+	if ( isTweening ) {
+		console.log( 'it was already tweening' );
+		return;
+	}
+
+	var tween = new TWEEN.Tween(cp)
+		.to({x:0,y:0}, 200 )
+		.easing( TWEEN.Easing.Quadratic.InOut )
+		.start();
+
+	var tweenBack = new TWEEN.Tween(cp)
+		.to({x:cp.x,y:cp.y}, 500 )
+		.easing( TWEEN.Easing.Quadratic.InOut );
+
+	tween.chain(tweenBack);
+}
+
+ShapeModule.prototype.setControlPoints = function() {
+
+}
+
+
 
 ShapeModule.prototype.key = function( key ) {
 
+	if ( key == 'A' ) {
+		this.throttleRotation();	
+	}
+
+	if ( key == 'S' ) {
+		this.breakApart(true);
+	}
+
+	if ( key == 'D' ) {
+		this.breakApart(false);
+	}
+
+	if ( key == 'Q' ) {
+		this.pinchRandom();
+	}
+
+	if ( key =='R' ) {
+		// this.pinchAcross( Math.floor(utils.random(this.controlPoints.length) ) );
+		this.pinchAcross( (++this.pinchCounter)%(this.controlPoints.length-1) );
+	}
+
+	if ( key == 'W' ) {
+		this.pinchAround( Math.floor(utils.random(this.numPerSegment) ) );
+	}
+
+	if ( key == 'E' ) {
+		this.pinch( this.controlPoints[ (++this.pinchCounter)%(this.controlPoints.length-1) ] ); 
+	}
 }
