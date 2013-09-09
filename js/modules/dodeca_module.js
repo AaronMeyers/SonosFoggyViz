@@ -102,8 +102,13 @@ DodecaModule.prototype.shift = function( spots ) {
 	for ( r in this.rects ) {
 		var rect = this.rects[r];
 		var callback = function() {
-			if ( this.node.position.x > WIDTH )
+			// console.log( this.node.position.x );
+			if ( this.node.position.x > WIDTH ) {
 				this.node.position.x -= WIDTH;
+			}
+			else if ( this.node.position.x < 0 ) {
+				this.node.position.x += WIDTH;
+			}
 		}
 		this.rects[r].animate( rect.node.position.x + spots * this.slotWidth, undefined, undefined, undefined, 200, callback );
 	}

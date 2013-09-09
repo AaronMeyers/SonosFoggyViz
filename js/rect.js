@@ -38,18 +38,7 @@ Rect = function( x, y, width, height, filled, thickness ) {
 	this.planeR.position.x = WIDTH;
 	this.planeR.name = "planeR";
 	this.node.add( this.planeR );
-
-	// // create a wireframe plane
-	// this.wireframe = new THREE.Line( wirePoints, wireMaterial );
-	// this.node.add( this.wireframe );
-	// // create a wrapping wireframe plane
-	// this.wireframeL = new THREE.Line( wirePoints, wireMaterial );
-	// this.wireframeL.position.x = -WIDTH;
-	// this.node.add( this.wireframeL );
-	// this.wireframeR = new THREE.Line( wirePoints, wireMaterial );
-	// this.wireframeR.position.x = WIDTH;
-	// this.node.add( this.wireframeR );
-
+	
 	this.prects = new Array();
 	this.prect = new PRect( 0, 0, width, height, thickness );
 	this.prects.push( this.prect );
