@@ -69,7 +69,7 @@ ShapeModule.prototype.init = function() {
 	this.mesh.dynamic = true;
 
 	// states
-	this.apart = false;
+	this.apart = 'together';
 	this.tweaking = false;
 	this.tweakingStep = 4; // number of frames between a tweaking animation
 	gui.add( this, 'tweakingStep', 1, 16 ).step( 1 );
@@ -77,7 +77,7 @@ ShapeModule.prototype.init = function() {
 	this.tweakingFunction = this.pinch;
 
 	this.meshes = [ this.mesh ];
-	for ( var i =0; i<3; i++ ) {
+	for ( var i =0; i<7; i++ ) {
 		var clone = this.mesh.clone();
 		this.meshes.push( clone );
 		// clone.position.x = 100 * i;
@@ -151,26 +151,36 @@ ShapeModule.prototype.update = function() {
 	this.mesh.geometry.verticesNeedUpdate = true;
 }
 
-ShapeModule.prototype.breakApart = function( in4 ) {
-	if ( this.apart ) {
+ShapeModule.prototype.breakApart = function( form ) {
+	
+	if ( form == this.apart ) {
 		this.comeTogether();
 		return;
 	}
 
-	var dist = in4 ? 250 : 500;
-	var scale = in4 ? .5 : 1;
-	var positions = in4 ? [
+	var dist = form=='eight' ? 225 : 500;
+	var scale = form=='eight' ? .5 : 1;
+	var positions = form=='eight' ? [
+		new THREE.Vector3( -dist * 3, dist, 0 ),
 		new THREE.Vector3( -dist, dist, 0 ),
 		new THREE.Vector3( dist, dist, 0 ),
+		new THREE.Vector3( dist * 3, dist, 0 ),
+		new THREE.Vector3( dist*3, -dist, 0 ),
 		new THREE.Vector3( dist, -dist, 0 ),
-		new THREE.Vector3( -dist, -dist, 0 )
+		new THREE.Vector3( -dist, -dist, 0 ),
+		new THREE.Vector3( -dist*3, -dist, 0 )
 	] : [
 		new THREE.Vector3( -dist, 0, 0 ),
 		new THREE.Vector3( -dist, 0, 0 ),
+		new THREE.Vector3( -dist, 0, 0 ),
+		new THREE.Vector3( -dist, 0, 0 ),
+		new THREE.Vector3( dist, 0, 0 ),
+		new THREE.Vector3( dist, 0, 0 ),
 		new THREE.Vector3( dist, 0, 0 ),
 		new THREE.Vector3( dist, 0, 0 )
 	];
 
+	console.log( this.meshes.length );
 	for ( var i = 0; i<this.meshes.length; i++ ) {
 		var mesh = this.meshes[i];
 		var tweenObj = {
@@ -179,6 +189,7 @@ ShapeModule.prototype.breakApart = function( in4 ) {
 			y: mesh.position.y,
 			scale: mesh.scale.x
 		}
+		console.log( positions[i].x, positions[i].y );
 		var tween = new TWEEN.Tween(tweenObj)
 			.to({x: positions[i].x,y: positions[i].y, scale:scale}, 250)
 			.easing(TWEEN.Easing.Quadratic.InOut)
@@ -189,7 +200,7 @@ ShapeModule.prototype.breakApart = function( in4 ) {
 			.start();
 	}
 
-	this.apart = true;
+	this.apart = form;
 }
 
 ShapeModule.prototype.comeTogether = function() {
@@ -337,7 +348,7 @@ ShapeModule.prototype.key = function( key ) {
 	}
 
 	if ( key == 'S' ) {
-		this.breakApart(true);
+		this.breakApart( 'eight' );
 	}
 
 	if ( key == 'D' ) {
