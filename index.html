@@ -174,7 +174,7 @@
 
 			var whiteBar;
 			var whiteBarHeight = 100;
-			var whiteBarVisible = true;
+			var whiteBarVisible = false;
 
 			var lastHit = new Date().getTime();
 			var hitThreshold = 500;
@@ -185,10 +185,10 @@
 
 			function init() {
 
-				initAudio();
+				// initAudio() used to listen to system audio
+				// initAudio();
 
 				renderer = new THREE.WebGLRenderer();
-				// renderer.setSize( window.innerWidth, window.innerHeight );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
 
@@ -207,15 +207,10 @@
 				blackoutPlane.visible = false;
 				scene.add( blackoutPlane );
 
-				// testRect = new PRect( 300, 200, 400, 200, 20 );
-				// scene.add( testRect.mesh );
-				// testRect.setThickness( 3 );
-				// testRect.setWidth( 1000 );
-				// testRect.update();
-
 				initPostProcessing();
 
 				initGUI();
+				$(gui.domElement).hide();
 
 				initModules();
 
@@ -223,6 +218,29 @@
 
 				window.addEventListener( 'resize', onWindowResize, false );
 				window.addEventListener( 'keydown', onKeyDown, false );
+				window.addEventListener( 'drop', dropEvent, false );
+				window.addEventListener( 'dragover', dragOver, false );
+			}
+
+			function dragOver( evt ) {
+				evt.stopPropagation();
+				evt.preventDefault();
+				return false;
+			}
+
+			function dropEvent( evt ) {
+				evt.stopPropagation();
+				evt.preventDefault();
+
+				var droppedFiles = evt.dataTransfer.files;
+				var reader = new FileReader();
+
+				reader.onload = function(fileEvent) {
+					var data = fileEvent.target.result;
+					initAudioFile(data);
+				}
+
+				reader.readAsArrayBuffer(droppedFiles[0]);
 			}
 
 			function initWhiteBar() {
@@ -476,6 +494,51 @@
 				composer.addPass( effect );
 			}
 
+			function initAudioFile( data ) {
+				if (!audioContext) audioContext = new webkitAudioContext();
+
+				if ( audioSource ) {
+					audioSource.noteOff(0);
+					audioSource.disconnect(0);
+					audioData.disconnect(0);
+				}
+
+				audioSource = audioContext.createBufferSource();
+
+				if ( audioContext.decodeAudioData ) {
+					audioContext.decodeAudioData(data, function(buffer) {
+						audioSource.buffer = buffer;
+						createAudioFromFile();
+					}, function(e) {
+						console.log(e);
+					});
+				}
+			}
+
+			function createAudioFromFile() {
+				// processor = context.createJavaScriptNode(2048 /*bufferSize*/, 1 /*num inputs*/, 1 /*num outputs*/); 
+				// processor.onaudioprocess = processAudio;
+
+
+				audio.bufferSize = 1024;
+				audio.channels = 1;
+				audio.rate = audioContext.sampleRate;
+				audio.bd = new BeatDetektor();
+				audio.kick_det = new BeatDetektor.modules.vis.BassKick();
+				audio.vu = new BeatDetektor.modules.vis.VU();
+				audio.fft = new FFT(audio.bufferSize, audio.rate);
+				audio.useAudio = true;
+
+				audioData = audioContext.createJavaScriptNode( audio.bufferSize, 2, 1 );
+				audioData.onaudioprocess = doWebkitAudio;
+
+				audioSource.connect( audioContext.destination );
+				audioSource.connect( audioData );
+				audioData.connect(audioContext.destination);
+
+				audioSource.noteOn(0);
+			}
+
 			function initAudio() {
 				// create the audio context
 				if (!audioContext) audioContext = new webkitAudioContext();
@@ -512,6 +575,7 @@
 
 				var signalLeft = event.inputBuffer.getChannelData(0);
 				var signalRight = event.inputBuffer.getChannelData(1);
+
 
 				if (!audio.signal) {
 					audio.signal = new Float32Array(signalLeft.length);
