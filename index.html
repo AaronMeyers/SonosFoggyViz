@@ -168,7 +168,7 @@
 			var effectSave, effectBlend;
 
 			var autoSwitch = true;
-			var switchInterval = 30;
+			var switchInterval = 10;
 			var lastSwitch = new Date().getTime();
 			var testRect;
 
@@ -200,7 +200,7 @@
 				var planeGeom = new THREE.PlaneGeometry( 1, 1, 1, 1 );
 				var planeMaterial = new THREE.MeshBasicMaterial({color:0x000000,transparent:true});
 				blackoutPlane = new THREE.Mesh( planeGeom, planeMaterial );
-				blackoutPlane.scale.x = WIDTH;
+				blackoutPlane.scale.x = WIDTH * 2;
 				blackoutPlane.scale.y = HEIGHT;
 				blackoutPlane.position.x = window.innerWidth * .5;
 				blackoutPlane.position.z = 100;
@@ -382,7 +382,7 @@
 				gui.add( this, 'maxNoises', 5, 30 );
 				gui.add( this, 'noiseScale', 0, 10 ).step( .25 ).listen();
 				gui.add( this, 'autoSwitch' );
-				gui.add( this, 'switchInterval', 30, 240 ).step( 1 ).onChange( function( value ) {
+				gui.add( this, 'switchInterval', 5, 60 ).step( 1 ).onChange( function( value ) {
 					lastSwitch = new Date().getTime();
 				});
 				gui.add( this, 'whiteBarHeight', 10, 400 ).step( 5 ).listen().onChange( setWhiteBarHeight );
