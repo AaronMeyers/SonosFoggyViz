@@ -200,8 +200,8 @@
 				var planeGeom = new THREE.PlaneGeometry( 1, 1, 1, 1 );
 				var planeMaterial = new THREE.MeshBasicMaterial({color:0x000000,transparent:true});
 				blackoutPlane = new THREE.Mesh( planeGeom, planeMaterial );
-				blackoutPlane.scale.x = WIDTH * 2;
-				blackoutPlane.scale.y = HEIGHT;
+				blackoutPlane.scale.x = WIDTH * 4;
+				blackoutPlane.scale.y = HEIGHT * 4;
 				blackoutPlane.position.x = window.innerWidth * .5;
 				blackoutPlane.position.z = 100;
 				blackoutPlane.visible = false;
@@ -220,6 +220,8 @@
 				window.addEventListener( 'keydown', onKeyDown, false );
 				window.addEventListener( 'drop', dropEvent, false );
 				window.addEventListener( 'dragover', dragOver, false );
+
+				onWindowResize();
 			}
 
 			function dragOver( evt ) {
@@ -719,8 +721,12 @@
 				// camera.right = window.innerWidth;
 				// camera.top = window.innerHeight / 2;
 				// camera.bottom = window.innerHeight / - 2;
-				// camera.updateProjectionMatrix();
 
+				var windowAspect = window.innerWidth / window.innerHeight;
+				var camHeight = WIDTH / windowAspect;
+				camera.top = camHeight/2.0;
+				camera.bottom = -camHeight/ 2;
+				camera.updateProjectionMatrix();
 				renderer.setSize( window.innerWidth, window.innerHeight );
 
 				// blackoutPlane.scale.x = window.innerWidth;
